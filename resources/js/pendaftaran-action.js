@@ -1,63 +1,71 @@
-/**
- * Fungsi global untuk menangani aksi Setujui dan Tolak pendaftaran.
- * Ini menggunakan Fetch API untuk mengirim permintaan AJAX.
- *
- * @param {HTMLElement} btn - Elemen tombol yang diklik.
- * @param {string} url - URL endpoint untuk aksi (approve/reject).
- * @param {string} type - Tipe aksi ('setuju' atau 'tolak').
- */
 window.handleAction = function(btn, url, type) {
     if (btn.disabled) return;
     
-    // Pastikan meta tag CSRF tersedia
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-    if (!csrfToken) {
-        alert('Kesalahan konfigurasi: Token CSRF tidak ditemukan.');
-        return;
-    }
-
-    const label = type === 'setuju' ? 'Menerima' : 'Menolak';
+    const isApprove = type === 'setuju';
     
-    if (!confirm(`Anda yakin ingin ${label} pendaftar ini?`)) return;
-
-    // Tampilkan loading state
-    const originalContent = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-
-    fetch(url, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': csrfToken,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
+    // Tampilan Konfirmasi Modern
+    Swal.fire({
+        title: isApprove ? 'Setujui Pendaftaran?' : 'Tolak Pendaftaran?',
+        text: isApprove 
+            ? 'Siswa akan diterima sebagai calon peserta didik.' 
+            : 'Pendaftaran siswa akan dibatalkan/ditolak.',
+        icon: 'warning',
+        iconColor: isApprove ? '#10b981' : '#f43f5e',
+        showCancelButton: true,
+        confirmButtonText: isApprove ? 'Ya, Setujui' : 'Ya, Tolak',
+        cancelButtonText: 'Batal',
+        reverseButtons: true,
+        buttonsStyling: false,
+        customClass: {
+            container: 'swal-modern-backdrop',
+            popup: 'swal-modern-popup',
+            title: 'swal-modern-title',
+            htmlContainer: 'swal-modern-content',
+            confirmButton: `swal-btn ${isApprove ? 'swal-btn-success' : 'swal-btn-danger'}`,
+            cancelButton: 'swal-btn swal-btn-cancel'
         }
-    })
-    .then(res => {
-        // Cek jika response tidak ok (misal 4xx atau 5xx)
-        if (!res.ok) {
-            return res.json().then(error => {
-                throw new Error(error.message || 'Aksi gagal dilakukan.');
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Tampilkan Loading State di Tombol
+            const originalContent = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            // Eksekusi Fetch
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success || data.id_pendaftaran) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil!',
+                        text: 'Status pendaftaran telah diperbarui.',
+                        timer: 1500,
+                        showConfirmButton: false,
+                        customClass: { popup: 'swal-modern-popup' }
+                    }).then(() => window.location.reload());
+                } else {
+                    throw new Error(data.message || 'Gagal memperbarui status.');
+                }
+            })
+            .catch(err => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Kesalahan',
+                    text: err.message,
+                    customClass: { popup: 'swal-modern-popup' }
+                });
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
             });
         }
-        return res.json();
-    })
-    .then(data => {
-        if (data.success) {
-            // Reload halaman setelah sukses
-            window.location.reload();
-        } else {
-            // Tangani kegagalan dari server (jika 'success' false)
-            alert('Gagal: ' + (data.message || 'Terjadi kesalahan.'));
-            btn.disabled = false;
-            btn.innerHTML = originalContent;
-        }
-    })
-    .catch(err => {
-        console.error('Fetch error:', err);
-        alert('Terjadi kesalahan server: ' + err.message);
-        // Kembalikan tombol ke keadaan semula jika ada error
-        btn.disabled = false;
-        btn.innerHTML = originalContent;
     });
 }
