@@ -1,224 +1,257 @@
 <x-guest-layout>
-    <div class="container mx-auto mt-10 p-5">
+    @php
+        // 1. Logika Tahun Pelajaran Otomatis (Kunci Minimal 2026)
+        $bulanSekarang = (int)date('n');
+        $tahunSekarang = (int)date('Y');
+        $tahunDasar = ($bulanSekarang < 7) ? ($tahunSekarang - 1) : $tahunSekarang;
+        $tahunMulai = max(2026, $tahunDasar);
+        $tahunSelesai = $tahunMulai + 1;
+        $tahunAjaran = $tahunMulai . '/' . $tahunSelesai;
 
-        {{-- Header --}}
-        <div class="text-center mb-10">
-            <h1 class="text-3xl font-bold text-gray-800">Pembayaran Biaya Sekolah</h1>
-            <p class="text-lg text-gray-600 mt-2">SD Muhammadiyah 2 Ambarketawang - Tahun Pelajaran 2026/2027</p>
+        // 2. Logika Perhitungan & Warna Tagihan
+        if (isset($tagihan)) {
+            $total_seharusnya = $rincian_biaya->sum('jumlah_biaya');
+            
+            // Total yang muncul di ringkasan (Confirmed + Menunggu agar sesuai dengan riwayat)
+            $sudah_dibayar_riwayat = $riwayat_cicilan->whereIn('status_konfirmasi', ['Dikonfirmasi', 'Menunggu Verifikasi'])->sum('nominal_bayar');
+            
+            // Sisa tagihan riil (Total - yang sudah dikonfirmasi saja untuk accounting)
+            $sudah_dikonfirmasi = $riwayat_cicilan->where('status_konfirmasi', 'Dikonfirmasi')->sum('nominal_bayar');
+            $sisa_tagihan_riil = $total_seharusnya - $sudah_dikonfirmasi;
+
+            // Cek status untuk warna
+            $ada_menunggu = $riwayat_cicilan->where('status_konfirmasi', '!=', 'Dikonfirmasi')->isNotEmpty();
+
+            // Logika Warna berdasarkan permintaan:
+            if ($sudah_dibayar_riwayat == 0) {
+                $warnaStatus = 'text-red-600'; // Belum ada bayar sama sekali = Merah
+            } elseif ($ada_menunggu) {
+                $warnaStatus = 'text-yellow-500'; // Ada yang menunggu = Kuning
+            } else {
+                $warnaStatus = 'text-green-600'; // Sudah dikonfirmasi atau Lunas = Hijau
+            }
+        }
+    @endphp
+
+    <div class="min-h-screen bg-gray-100 py-12 px-4">
+        {{-- HEADER --}}
+        <div class="text-center mb-8">
+            <h1 class="text-2xl font-bold text-gray-900">Pembayaran Biaya Sekolah</h1>
+            <p class="text-sm text-gray-600">SD Muhammadiyah 2 Ambarketawang - Tahun Pelajaran {{ $tahunAjaran }}</p>
         </div>
 
-        <div class="max-w-6xl mx-auto">
+        {{-- CARD PUTIH --}}
+        <div class="max-w-4xl mx-auto bg-white rounded-[2rem] shadow-xl p-8 lg:p-12">
+            <h2 class="text-lg font-bold text-gray-800 mb-6">Unggah Bukti Pembayaran</h2>
 
-            {{-- NOTIFIKASI ERROR/SUKSES --}}
-            @if(session('success'))
-                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-5 shadow-sm">
-                    {{ session('success') }}
-                </div>
-            @endif
-            @if(session('error'))
-                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-5 shadow-sm">
-                    {{ session('error') }}
-                </div>
-            @endif
-            @if ($errors->any())
-                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-5 shadow-sm">
-                    <ul class="list-disc ml-5">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
+            @if(isset($tagihan))
+                {{-- 1. RINCIAN ADMINISTRASI --}}
+                <div class="mb-10">
+                    <h3 class="text-md font-bold text-gray-800 mb-4">Rincian Administrasi Sistem Penerimaan Murid Baru {{ $tahunAjaran }} :</h3>
+                    <p class="text-center font-bold text-gray-700 mb-4 text-sm">
+                        Siswa: {{ $rincian_biaya->where('jenis_kelamin', '!=', 'Umum')->first()->jenis_kelamin ?? '—' }}
+                    </p>
 
-            {{-- Bagian Rincian Administrasi --}}
-            <div class="bg-white p-8 shadow-2xl rounded-xl border border-gray-100 mb-10">
-                <h2 class="text-xl font-bold mb-4 text-gray-800 border-b pb-2">Rincian Administrasi Sistem Penerimaan Murid Baru 2026/2027</h2>
-                @if($rincian_biaya->isNotEmpty())
-                    <h3 class="font-semibold text-lg mb-3 text-center text-blue-800">
-                        Siswa: {{ $rincian_biaya->first()->jenis_kelamin ?? '—' }}
-                    </h3>
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">No</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Uraian</th>
-                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Biaya</th>
+                        <table class="w-full text-sm text-gray-700">
+                            <thead>
+                                <tr class="border-b">
+                                    <th class="py-2 text-left w-12">No</th>
+                                    <th class="py-2 text-left">Uraian</th>
+                                    <th class="py-2 text-right">Biaya</th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
+                            <tbody class="divide-y divide-gray-100">
                                 @foreach($rincian_biaya as $index => $item)
                                     <tr>
-                                        <td class="px-6 py-3 text-sm text-gray-500">{{ $index + 1 }}</td>
-                                        <td class="px-6 py-3 text-sm font-medium text-gray-900">{{ $item->uraian }}</td>
-                                        <td class="px-6 py-3 text-sm text-right text-gray-700 font-mono">
-                                            Rp. {{ number_format($item->jumlah_biaya, 0, ',', '.') }}
-                                        </td>
+                                        <td class="py-3">{{ $index + 1 }}</td>
+                                        <td class="py-3">{{ $item->uraian }}</td>
+                                        <td class="py-3 text-right font-medium">Rp. {{ number_format($item->jumlah_biaya, 0, ',', '.') }}</td>
                                     </tr>
                                 @endforeach
-                                <tr class="bg-gray-100 font-bold italic">
-                                    <td colspan="2" class="px-6 py-3 text-sm text-right uppercase">Total Kewajiban</td>
-                                    <td class="px-6 py-3 text-sm text-right text-blue-900">
-                                        Rp. {{ number_format($rincian_biaya->sum('jumlah_biaya'), 0, ',', '.') }}
-                                    </td>
-                                </tr>
                             </tbody>
+                            <tfoot>
+                                <tr class="font-bold text-gray-900 border-t">
+                                    <td colspan="2" class="py-4 text-right pr-4">Jumlah</td>
+                                    <td class="py-4 text-right">Rp. {{ number_format($total_seharusnya, 0, ',', '.') }}</td>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
-                @else
-                    <p class="text-center text-gray-500 py-5">Rincian biaya administrasi belum tersedia.</p>
-                @endif
-            </div>
-
-            {{-- Ringkasan Tagihan & Riwayat --}}
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
-                
-                {{-- KARTU RINGKASAN TAGIHAN --}}
-                <div class="bg-white p-6 shadow-2xl rounded-xl border border-gray-100 col-span-1">
-                    <h3 class="text-xl font-bold mb-4 text-gray-800">Ringkasan Tagihan</h3>
-                    @if(isset($tagihan))
-                        <div class="space-y-4">
-                            <div class="flex justify-between items-center text-gray-700">
-                                <span class="text-sm">Total Tagihan</span>
-                                <span class="font-bold text-gray-900">Rp. {{ number_format($tagihan->total_tagihan, 0, ',', '.') }}</span>
-                            </div>
-
-                            {{-- LOGIKA STATUS LUNAS --}}
-                            @if($tagihan->sisa_tagihan <= 0)
-                                <div class="bg-green-100 border border-green-500 text-green-700 p-4 rounded-lg text-center font-bold animate-pulse">
-                                    <p class="text-lg">TAGIHAN ANDA SUDAH LUNAS</p>
-                                    <p class="text-xs font-normal italic mt-1">Data pembayaran telah terverifikasi sistem.</p>
-                                </div>
-                            @else
-                                <div class="flex justify-between items-center text-green-700 border-t pt-2 border-green-200">
-                                    <span class="text-sm">Total Sudah Dibayar</span>
-                                    @php
-                                       $sudah_dibayar = $riwayat_cicilan->whereIn('status_konfirmasi', ['Dikonfirmasi', 'Menunggu Verifikasi'])
-                                         ->sum('nominal_bayar');
-                                    @endphp
-                                    <span class="font-bold font-mono text-base">Rp. {{ number_format($sudah_dibayar, 0, ',', '.') }}</span>
-                                </div>
-
-                                <div class="flex justify-between items-center bg-blue-50 p-3 rounded-lg border border-blue-200">
-                                    <span class="font-semibold text-gray-700">Sisa Tagihan</span>
-                                    <span class="font-bold text-xl text-blue-800 font-mono">
-                                        Rp. {{ number_format($tagihan->sisa_tagihan, 0, ',', '.') }}
-                                    </span>
-                                </div>
-                            @endif
-                        </div>
-                    @else
-                        <p class="text-center text-gray-500 py-5 font-italic">Data tagihan tidak ditemukan.</p>
-                    @endif
                 </div>
 
-                {{-- RIWAYAT CICILAN --}}
-                <div class="lg:col-span-2 bg-white p-6 shadow-2xl rounded-xl border border-gray-100">
-                    <h3 class="text-xl font-bold mb-4 text-gray-800">Riwayat Pembayaran</h3>
-                    <div class="max-h-80 overflow-y-auto pr-2">
-                        @forelse($riwayat_cicilan as $cicilan)
-                            <div class="p-4 border-b last:border-b-0 hover:bg-gray-50 transition">
-                                <div class="flex justify-between items-start">
-                                    <span class="font-semibold text-gray-800">{{ $cicilan->keterangan_cicilan }}</span>
-                                    <span class="px-3 py-1 text-xs font-bold rounded-full {{ $cicilan->status_konfirmasi == 'Dikonfirmasi' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-yellow-100 text-yellow-700 border border-yellow-200' }}">
-                                        {{ $cicilan->status_konfirmasi }}
-                                    </span>
-                                </div>
-                                <div class="flex justify-between items-center mt-3">
-                                    <div>
-                                        <p class="text-lg font-bold text-gray-900 font-mono">Rp. {{ number_format($cicilan->nominal_bayar, 0, ',', '.') }}</p>
-                                        <p class="text-xs text-gray-400 italic">{{ \Carbon\Carbon::parse($cicilan->tanggal_bayar)->translatedFormat('d F Y') }}</p>
+                {{-- 2. GRID RINGKASAN & RIWAYAT --}}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                    <div class="bg-white border border-gray-100 shadow-md rounded-xl p-6">
+                        <h4 class="font-bold text-gray-800 mb-4">Ringkasan Tagihan</h4>
+                        <div class="space-y-3 text-sm">
+                            <div class="flex justify-between text-gray-500">
+                                <span>Total Tagihan</span>
+                                <span class="font-bold">Rp. {{ number_format($total_seharusnya, 0, ',', '.') }}</span>
+                            </div>
+                            {{-- Warna dinamis: Merah/Kuning/Hijau --}}
+                            <div class="flex justify-between {{ $warnaStatus }}">
+                                <span class="font-medium">Total Sudah Dibayar</span>
+                                <span class="font-bold">Rp. {{ number_format($sudah_dibayar_riwayat, 0, ',', '.') }}</span>
+                            </div>
+                            <div class="flex justify-between bg-gray-100 p-3 rounded-lg font-bold mt-4">
+                                <span>Sisa Tagihan</span>
+                                <span>Rp. {{ number_format($sisa_tagihan_riil, 0, ',', '.') }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white border border-gray-100 shadow-md rounded-xl p-6">
+                        <h4 class="font-bold text-gray-800 mb-4">Riwayat Cicilan</h4>
+                        <div class="max-h-40 overflow-y-auto space-y-3">
+                            @forelse($riwayat_cicilan as $index => $cicilan)
+                                <div class="border-b pb-2 text-xs">
+                                    <div class="flex justify-between items-start mb-1">
+                                        <div>
+                                            <p class="font-bold text-gray-800">Cicilan {{ $index + 1 }}</p>
+                                            <p class="text-gray-400">{{ \Carbon\Carbon::parse($cicilan->tanggal_bayar)->format('d/m/Y') }}</p>
+                                        </div>
+                                        <span class="{{ $cicilan->status_konfirmasi == 'Dikonfirmasi' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' }} px-2 py-0.5 rounded-full text-[10px] font-bold">
+                                            {{ $cicilan->status_konfirmasi == 'Dikonfirmasi' ? 'Diterima' : 'Menunggu' }}
+                                        </span>
                                     </div>
-                                    <a href="{{ asset('storage/' . $cicilan->bukti_transfer) }}" target="_blank"
-                                        class="flex items-center text-sm text-blue-600 font-bold hover:text-blue-800 group">
-                                        Lihat Bukti 
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                        </svg>
-                                    </a>
+                                    <div class="flex justify-between">
+                                        <span class="font-bold text-sm">Rp. {{ number_format($cicilan->nominal_bayar, 0, ',', '.') }}</span>
+                                        <button type="button" onclick="openModalBukti('{{ asset('storage/' . $cicilan->bukti_transfer) }}')" class="text-blue-500 hover:underline">Lihat Bukti</button>
+                                    </div>
                                 </div>
-                            </div>
-                        @empty
-                            <p class="text-center text-gray-500 py-10">Belum ada transaksi pembayaran yang dilakukan.</p>
-                        @endforelse
+                            @empty
+                                <p class="text-center text-gray-400 italic py-4 text-xs">Belum ada cicilan.</p>
+                            @endforelse
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {{-- FORM UPLOAD (Hanya muncul jika belum lunas) --}}
-            @if(isset($tagihan) && $tagihan->sisa_tagihan > 0)
-                <div class="bg-white p-8 shadow-2xl rounded-xl border border-gray-100">
-                    <h3 class="text-xl font-bold mb-6 text-gray-800 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-blue-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                        Kirim Bukti Pembayaran
-                    </h3>
-                    
-                    <form action="{{ route('pembayaran.submit') }}" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                            <h4 class="font-bold text-gray-800 mb-1">Informasi Rekening Tujuan:</h4>
-                            <p class="text-sm text-gray-700">Bank Rakyat Indonesia (BRI)</p>
-                            <p class="text-lg font-bold text-blue-900 tracking-wider">7123-4567-890</p>
-                            <p class="text-sm text-gray-600 italic">A.N. Andini Septi Andri</p>
+                {{-- 3. FORM PEMBAYARAN --}}
+                @if($sisa_tagihan_riil > 0)
+                    <div class="border-t pt-8">
+                        <h3 class="text-md font-bold text-gray-800 mb-4">Bayar Cicilan Berikutnya</h3>
+                        <div class="mb-6 ml-1 text-sm">
+                            <p class="text-gray-500 mb-1">Transfer ke : <span class="font-bold text-gray-700 underline">BCA A.N Muhammad Hanif</span></p>
+                            <p class="text-gray-500">No. Rekening : <span class="font-bold text-gray-700 underline">0374371025</span></p>
+                        </div>
+
+                        <form id="paymentForm" action="{{ route('pembayaran.submit') }}" method="POST" enctype="multipart/form-data" class="space-y-6" onsubmit="return validatePaymentForm()">
+                            @csrf
                             <input type="hidden" name="tagihan_id" value="{{ $tagihan->id }}">
-                        </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {{-- Input Nominal --}}
-                            <div class="mb-6">
-                                <label class="block text-sm font-bold text-gray-700 mb-2 uppercase">Nominal yang Dibayarkan</label>
-                                <div class="relative">
-                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 font-bold">Rp.</span>
-                                    <input type="number" name="nominal_bayar" required
-                                        max="{{ $tagihan->sisa_tagihan }}"
-                                        class="w-full pl-12 border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm" 
-                                        placeholder="Contoh: 500000">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-2">Nominal Pembayaran</label>
+                                <div class="relative mt-1">
+                                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                        <span class="text-gray-500 sm:text-sm">Rp.</span>
+                                    </div>
+                                    <input type="text" id="nominal_display" required
+                                        class="block w-full rounded-md border-gray-300 pl-10 focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2.5 font-normal text-gray-800" 
+                                        placeholder="0"
+                                        onkeyup="formatRupiah(this)">
+                                    <input type="hidden" name="nominal_bayar" id="nominal_asli">
                                 </div>
-                                <p class="mt-2 text-xs text-gray-500 italic font-medium">* Maksimal pembayaran: Rp. {{ number_format($tagihan->sisa_tagihan, 0, ',', '.') }}</p>
+                                <p class="mt-1.5 text-[11px] text-gray-400 italic font-medium">
+                                    * Sisa tagihan: Rp. {{ number_format($sisa_tagihan_riil, 0, ',', '.') }}
+                                </p>
+                                <p id="error-nominal" class="hidden mt-1 text-[11px] text-red-600 font-bold italic">! Mohon isi nominal.</p>
                             </div>
 
-                            {{-- Input File --}}
-                            <div class="mb-6">
-                                <label class="block text-sm font-bold text-gray-700 mb-2 uppercase text-center md:text-left">Upload Bukti Transfer (JPG/PNG/PDF)</label>
-                                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer group" onclick="document.getElementById('bukti_input').click()">
-                                    <input type="file" name="bukti_transfer" id="bukti_input" class="hidden"
-                                        accept=".jpg,.jpeg,.png,.pdf" required
-                                        onchange="document.getElementById('file_name').innerText = 'File terpilih: ' + this.files[0].name">
-                                    
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto text-gray-400 group-hover:text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                    </svg>
-                                    <p id="file_name" class="mt-2 text-sm font-bold text-blue-600 uppercase tracking-tight">Klik untuk pilih file</p>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-2">Upload Bukti Transfer</label>
+                                <div id="drop-area" class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50 group cursor-pointer" onclick="document.getElementById('bukti_input').click()">
+                                    <p id="file_name" class="text-xs text-gray-400 uppercase tracking-tighter mb-3">Format : Jpg, Jpeg, Png, Pdf</p>
+                                    <button type="button" class="bg-[#003366] text-white px-5 py-1.5 rounded-md text-xs font-medium hover:bg-blue-900 transition">Pilih File</button>
+                                    <input type="file" name="bukti_transfer" id="bukti_input" class="hidden" accept="image/*,.pdf" onchange="handleFileSelect(this)">
                                 </div>
+                                <p id="error-file" class="hidden mt-2 text-[11px] text-red-600 font-bold italic text-center">! Bukti transfer wajib diunggah.</p>
                             </div>
-                        </div>
 
-                        <div class="flex justify-end mt-4">
-                            <button type="submit"
-                                class="w-full md:w-auto bg-blue-800 text-white px-10 py-4 rounded-xl font-extrabold uppercase hover:bg-blue-900 transition-all shadow-lg hover:shadow-2xl flex items-center justify-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                                </svg>
-                                Konfirmasi Pembayaran
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            @else
-                {{-- FOOTER JIKA LUNAS --}}
-                <div class="bg-gray-100 p-8 rounded-xl border border-gray-200 text-center">
-                    <div class="inline-block p-4 bg-white rounded-full shadow-md mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        </svg>
+                            <div class="flex justify-end pt-4">
+                                <button type="submit" class="bg-[#003366] text-white px-10 py-2 rounded-lg font-bold shadow-lg hover:bg-blue-950 transition">
+                                    Kirim
+                                </button>
+                            </div>
+                        </form>
                     </div>
-                    <h3 class="text-2xl font-bold text-gray-800">Administrasi Anda Selesai</h3>
-                    <p class="text-gray-600 mt-2 max-w-md mx-auto italic">Terima kasih sudah menyelesaikan seluruh kewajiban administrasi. Silakan simpan riwayat ini sebagai bukti pelunasan.</p>
-                </div>
+                @else
+                    <div class="bg-green-600 p-8 rounded-2xl text-center text-white shadow-lg animate-pulse">
+                        <h3 class="text-xl font-bold mb-2">Administrasi Lunas</h3>
+                        <p class="opacity-90">Terima kasih, pembayaran telah terpenuhi.</p>
+                    </div>
+                @endif
             @endif
-
         </div>
     </div>
+
+    {{-- MODAL PREVIEW --}}
+    <div id="modalBukti" class="fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onclick="closeModalBukti()">
+        <div class="bg-white w-full max-w-xl rounded-2xl overflow-hidden shadow-2xl" onclick="event.stopPropagation()">
+            <div class="p-4 bg-gray-50 flex justify-center" id="modalBody"></div>
+            <div class="p-4 text-right border-t">
+                <button onclick="closeModalBukti()" class="px-6 py-2 bg-gray-800 text-white rounded-lg text-sm font-bold">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function validatePaymentForm() {
+            const fileInput = document.getElementById('bukti_input');
+            const nominalInput = document.getElementById('nominal_asli');
+            const errorFile = document.getElementById('error-file');
+            const errorNominal = document.getElementById('error-nominal');
+            const dropArea = document.getElementById('drop-area');
+            let isValid = true;
+
+            if (!nominalInput.value || nominalInput.value <= 0) {
+                errorNominal.classList.remove('hidden');
+                isValid = false;
+            } else { errorNominal.classList.add('hidden'); }
+
+            if (fileInput.files.length === 0) {
+                errorFile.classList.remove('hidden');
+                dropArea.classList.add('border-red-500', 'bg-red-50');
+                isValid = false;
+            } else { 
+                errorFile.classList.add('hidden');
+                dropArea.classList.remove('border-red-500', 'bg-red-50');
+            }
+            return isValid;
+        }
+
+        function handleFileSelect(input) {
+            const fileNameText = document.getElementById('file_name');
+            if (input.files.length > 0) {
+                fileNameText.innerText = 'File: ' + input.files[0].name;
+                fileNameText.classList.replace('text-gray-400', 'text-blue-700');
+                document.getElementById('error-file').classList.add('hidden');
+                document.getElementById('drop-area').classList.remove('border-red-500', 'bg-red-50');
+                document.getElementById('drop-area').classList.add('border-green-500', 'bg-green-50');
+            }
+        }
+
+        function formatRupiah(input) {
+            let value = input.value.replace(/[^,\d]/g, "").toString();
+            let split = value.split(",");
+            let sisa = split[0].length % 3;
+            let rupiah = split[0].substr(0, sisa);
+            let ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+            if (ribuan) {
+                let separator = sisa ? "." : "";
+                rupiah += separator + ribuan.join(".");
+            }
+            input.value = rupiah;
+            document.getElementById('nominal_asli').value = value;
+            if(value > 0) document.getElementById('error-nominal').classList.add('hidden');
+        }
+
+        function openModalBukti(fileUrl) {
+            const body = document.getElementById('modalBody');
+            const isPdf = fileUrl.toLowerCase().endsWith('.pdf');
+            body.innerHTML = isPdf ? `<embed src="${fileUrl}" type="application/pdf" class="w-full h-[60vh]">` : `<img src="${fileUrl}" class="max-w-full h-auto max-h-[70vh] rounded-lg">`;
+            document.getElementById('modalBukti').classList.replace('hidden', 'flex');
+        }
+        function closeModalBukti() { document.getElementById('modalBukti').classList.replace('flex', 'hidden'); }
+    </script>
 </x-guest-layout>

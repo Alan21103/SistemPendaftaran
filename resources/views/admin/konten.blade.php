@@ -4,21 +4,43 @@
 
 @section('content')
 
-    {{-- LOAD CSS KUSTOM --}}
+    {{-- LOAD SWEETALERT2 & CSS --}}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @vite(['resources/css/custom-dropdown.css', 'resources/css/animations.css'])
 
-   {{-- PERUBAHAN 1: Hapus class 'animate-fade-in-up' dari sini agar Sidebar diam --}}
+    <style>
+        /* Kustomisasi tombol SweetAlert agar persis seperti di gambar */
+        .swal2-styled.swal2-confirm {
+            background-color: #EF4444 !important; /* Merah */
+            color: white !important;
+            border-radius: 0.5rem !important;
+            padding: 0.6rem 2rem !important;
+            font-weight: 700 !important;
+            font-family: 'Inter', sans-serif !important;
+        }
+        .swal2-styled.swal2-cancel {
+            background-color: white !important;
+            color: #1E3A8A !important; /* Biru Gelap */
+            border: 2px solid #1E3A8A !important;
+            border-radius: 0.5rem !important;
+            padding: 0.6rem 2rem !important;
+            font-weight: 700 !important;
+            font-family: 'Inter', sans-serif !important;
+        }
+        .swal2-title {
+            font-size: 1.5rem !important;
+            font-weight: 800 !important;
+            color: #000 !important;
+        }
+        .swal2-html-container {
+            font-weight: 600 !important;
+            color: #000 !important;
+        }
+    </style>
+
    <div class="flex min-h-screen bg-gray-50">
         
-        {{-- ========================================================== --}}
-        {{-- SIDEBAR WRAPPER (FIXED)                                    --}}
-        {{-- ========================================================== --}}
-        {{-- 
-            Perbaikan:
-            1. 'w-64' DIHAPUS -> Agar lebar mengikuti bawaan sidebar asli (Pendaftaran).
-            2. 'shrink-0' -> Agar sidebar tidak gepeng/mengecil.
-            3. 'h-screen sticky top-0' -> Agar tinggi full dan tidak menggantung.
-        --}}
+        {{-- SIDEBAR --}}
         <div class="h-screen sticky top-0 ">
             <x-sidebar /> 
         </div>
@@ -33,570 +55,460 @@
                 <hr class="my-5 border-gray-300">
             </div>
 
-            {{-- ALERT SUCCESS & ERROR --}}
+            {{-- ALERT BERHASIL --}}
             @if (session('success'))
-            <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded shadow-sm" role="alert">
-                <p class="font-bold">Berhasil!</p> <p>{{ session('success') }}</p>
-            </div>
-            @endif
-            @if ($errors->any())
-                <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded shadow-sm" role="alert">
-                    <p class="font-bold">Gagal!</p>
-                    <ul class="list-disc list-inside text-sm mt-1">@foreach ($errors->all() as $error) <li>{{ $error }}</li> @endforeach</ul>
-                </div>
+            <script>
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: "{{ session('success') }}",
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+            </script>
             @endif
 
             {{-- LOOP KATEGORI --}}
             @foreach($kategori as $kat)
-            
             <div class="rounded-2xl bg-white p-8 shadow-sm border border-gray-100 mb-8 hover:shadow-md transition-shadow duration-300">
-
-                {{-- HEADER KATEGORI --}}
-                @php
-                    $isCustomLayout = ($kat->nama === 'Halaman Ekstrakurikuler' || $kat->nama === 'Ekstrakurikuler' || 
-                                       $kat->nama === 'Halaman Tenaga Pengajar' || $kat->nama === 'Tenaga Pengajar' ||
-                                       $kat->nama === 'Halaman Informasi PPDB'  || $kat->nama === 'Informasi PPDB');
-                @endphp
-
-                <div class="flex items-center mb-6 pb-4 border-b border-gray-100 {{ $isCustomLayout ? 'justify-start gap-4' : 'justify-between' }}">
+                
+                <div class="flex items-center gap-4 mb-6 pb-4 border-b border-gray-100">
                     <h2 class="text-xl font-extrabold text-black">
                         @if($kat->nama === 'Beranda') Halaman Beranda
                         @elseif($kat->nama === 'Tentang Sekolah') Halaman Tentang Sekolah
-                        @elseif($kat->nama === 'Ekstrakurikuler') Halaman Ekstrakurikuler
-                        @elseif($kat->nama === 'Tenaga Pengajar') Halaman Tenaga Pengajar
                         @elseif($kat->nama === 'Informasi PPDB') Halaman Informasi PPDB
-                        @else {{ $kat->nama }} @endif
+                        @else Halaman {{ $kat->nama }} @endif
                     </h2>
 
-                    {{-- LOGIKA TOMBOL TAMBAH --}}
                     @php
-                        $tampilTombol = true;
                         $opsiTersedia = []; 
-
-                        if ( ($kat->nama === 'Halaman Beranda' || $kat->nama === 'Beranda' || 
-                              $kat->nama === 'Halaman Informasi PPDB' || $kat->nama === 'Informasi PPDB') 
-                              && $kat->konten->count() > 0 ) {
-                            $tampilTombol = false;
-                        }
-                        
-                        if ($kat->nama === 'Halaman Tentang Sekolah' || $kat->nama === 'Tentang Sekolah') {
-                            $sudahAda = $kat->konten->pluck('judul')->map(function($item) { return strtolower(trim($item)); })->toArray();
+                        if ($kat->nama === 'Tentang Sekolah') {
+                            $sudahAda = $kat->konten->pluck('judul')->map(fn($i) => strtolower(trim($i)))->toArray();
                             $semuaOpsi = ['Sejarah', 'Visi', 'Misi'];
-                            foreach ($semuaOpsi as $opsi) { if (!in_array(strtolower($opsi), $sudahAda)) { $opsiTersedia[] = $opsi; } }
-                            if (empty($opsiTersedia)) { $tampilTombol = false; }
+                            foreach ($semuaOpsi as $o) { 
+                                if (!in_array(strtolower($o), $sudahAda)) $opsiTersedia[] = $o; 
+                            }
                         }
                     @endphp
 
-                    @if ($tampilTombol)
-                    <button class="text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition shadow-sm flex items-center gap-2 active:scale-95 transform duration-150"
+                    @if(
+                        ($kat->nama === 'Beranda' && $kat->konten->count() == 0) || 
+                        ($kat->nama === 'Tentang Sekolah' && count($opsiTersedia) > 0) ||
+                        ($kat->nama === 'Ekstrakurikuler') ||
+                        ($kat->nama === 'Tenaga Pengajar') ||
+                        ($kat->nama === 'Informasi PPDB' && $kat->konten->count() == 0)
+                    )
+                    <button class="bg-[#007BFF] hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg text-sm font-semibold transition active:scale-95 flex items-center gap-2"
                         onclick='openTambahModal({{ $kat->id }}, "{{ $kat->nama }}", @json($opsiTersedia))'>
-                        <span>+</span> Tambah
+                        <span class="text-lg">+</span> Tambah
                     </button>
                     @endif
                 </div>
 
-                {{-- ISI KONTEN2 --}}
-                
-                {{-- 1. TENTANG SEKOLAH --}}
-                @if ($kat->nama === 'Halaman Tentang Sekolah' || $kat->nama === 'Tentang Sekolah')
-                    <div class="space-y-8"> 
-                        @foreach($kat->konten as $konten)
-                        <div class="flex flex-col md:flex-row justify-between items-start gap-4 group">
-                            <div class="flex-1 pl-4 md:pl-6">
-                                <h3 class="text-lg font-bold text-black mb-2">{{ $konten->judul }}</h3> 
-                                <p class="text-gray-700 text-sm leading-relaxed text-justify">{{ $konten->isi }}</p>
-                            </div>
-                            <div class="flex gap-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                <button class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm transition transform hover:scale-105"
-                                    onclick="openEditModal({{ $konten->id }})"><i class="fas fa-pen mr-1"></i> Edit</button>
-                                <form action="{{ route('admin.konten.destroy', $konten->id) }}" method="POST">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm transition transform hover:scale-105"
-                                        onclick="return confirm('Yakin hapus konten ini?')"><i class="fas fa-trash-alt mr-1"></i> Hapus</button>
-                                </form>
-                            </div>
-                        </div>
-                        @if(!$loop->last) <hr class="border-gray-100"> @endif
-                        @endforeach
-                    </div>
-
-                {{-- 2. EKSTRAKURIKULER --}}
-                @elseif ($kat->nama === 'Halaman Ekstrakurikuler' || $kat->nama === 'Ekstrakurikuler')
-                    <div class="space-y-2">
-                        @foreach($kat->konten as $konten)
-                        <div class="flex flex-col md:flex-row justify-between items-start gap-6 py-8 border-b border-gray-100 last:border-0 hover:bg-gray-50/50 transition duration-300 rounded-lg px-2 -mx-2">
-                            <div class="flex-1">
-                                <h3 class="text-xl font-bold text-black mb-2">{{ $konten->judul }}</h3>
-                                <p class="text-gray-600 text-sm leading-relaxed mb-5 max-w-2xl">{{ $konten->isi }}</p>
-                                <div class="flex gap-3">
-                                    <button onclick="openEditModal({{ $konten->id }})" class="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-2 rounded-lg font-bold shadow-sm transition transform hover:-translate-y-0.5"><i class="fas fa-pen text-sm"></i> Edit</button>
-                                    <button type="button" onclick="openHapusModal('{{ route('admin.konten.destroy', $konten->id) }}', 'Hapus Ekstrakurikuler', 'Yakin untuk menghapus ekstrakurikuler?')" class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-bold shadow-sm transition transform hover:-translate-y-0.5"><i class="fas fa-trash-alt text-sm"></i> Hapus</button>
-                                </div>
-                            </div>
-                            <div class="flex-shrink-0">
-                                <div class="flex flex-wrap justify-end gap-3 max-w-md">
-                                    @foreach($konten->media as $media)
-                                    <div class="relative w-24 h-40 group">
-                                        <img src="{{ asset('storage/' . $media->file_path) }}" class="w-full h-full object-cover rounded-lg bg-gray-100 border border-gray-100">
-                                        <form action="{{ route('admin.konten_media.destroy', $media->id) }}" method="POST" class="absolute -top-2 -right-2 hidden group-hover:block z-10">
+                <div class="px-4"> 
+                    {{-- 1. TENAGA PENGAJAR --}}
+                    @if($kat->nama === 'Tenaga Pengajar')
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            @foreach($kat->konten as $konten)
+                            <div class="flex items-center gap-6 p-4 rounded-xl border border-gray-50 bg-gray-50/30">
+                                <div class="relative w-28 h-28 flex-shrink-0 group">
+                                    @php $foto = $konten->media->where('urutan', 0)->first(); @endphp
+                                    @if($foto)
+                                        <img src="{{ asset('storage/' . $foto->file_path) }}" class="w-full h-full object-cover rounded-xl shadow-sm border border-white">
+                                        <form action="{{ route('admin.konten_media.destroy', $foto->id) }}" method="POST" class="absolute -top-2 -right-2 hidden group-hover:block" onsubmit="return confirmDelete(event, 'Foto Guru')">
                                             @csrf @method('DELETE')
-                                            <button type="submit" class="bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-md transform hover:scale-110 transition" onclick="return confirm('Hapus foto ini?')">&times;</button>
+                                            <button type="submit" class="bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-700">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                            </button>
+                                        </form>
+                                    @else
+                                        <form action="{{ route('admin.konten_media.store') }}" method="POST" enctype="multipart/form-data" id="quick-upload-guru-{{ $konten->id }}">
+                                            @csrf
+                                            <input type="hidden" name="konten_id" value="{{ $konten->id }}">
+                                            <input type="file" name="file_path" id="input-guru-{{ $konten->id }}" class="hidden" accept="image/*" onchange="document.getElementById('quick-upload-guru-{{ $konten->id }}').submit()">
+                                            <div onclick="document.getElementById('input-guru-{{ $konten->id }}').click()" class="w-full h-full bg-white border-2 border-dashed border-gray-200 rounded-xl flex items-center justify-center cursor-pointer hover:border-blue-400 transition group/plus">
+                                                <span class="text-2xl text-gray-300 group-hover/plus:text-blue-500 font-light">+</span>
+                                            </div>
+                                        </form>
+                                    @endif
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="text-xl font-bold text-black">{{ $konten->judul }}</h3>
+                                    <p class="text-gray-500 text-sm mb-4">{{ $konten->isi }}</p>
+                                    <div class="flex gap-2">
+                                        <button onclick="openEditModal('{{ $konten->id }}', '{{ addslashes($konten->judul) }}', {{ json_encode($konten->isi) }}, '{{ $kat->nama }}', '')" class="bg-[#F9A825] hover:bg-orange-600 text-white px-5 py-1.5 rounded-md text-sm font-bold flex items-center gap-2 transition active:scale-95">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                            Edit
+                                        </button>
+                                        <form action="{{ route('admin.konten.destroy', $konten->id) }}" method="POST" onsubmit="return confirmDelete(event, 'Data Guru')">
+                                            @csrf @method('DELETE')
+                                            <button type="submit" class="bg-[#FF3B30] hover:bg-red-700 text-white px-5 py-1.5 rounded-md text-sm font-bold flex items-center gap-2 transition active:scale-95">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                Hapus
+                                            </button>
                                         </form>
                                     </div>
-                                    @endforeach
-                                    @if($konten->media->count() == 0) <div class="w-24 h-40 rounded-lg bg-gray-50 border border-gray-100"></div> @endif
-                                    <button onclick="openMediaModal({{ $konten->id }})" class="w-24 h-40 rounded-lg bg-gray-50 hover:bg-gray-100 border border-gray-100 flex items-center justify-center transition group transform hover:scale-105"><i class="fas fa-plus text-xl text-gray-400 group-hover:text-gray-600"></i></button>
                                 </div>
+                            </div>
+                            @endforeach
+                        </div>
+
+                    {{-- 2. INFORMASI PPDB --}}
+                    @elseif($kat->nama === 'Informasi PPDB')
+                        @foreach($kat->konten as $konten)
+                        <div class="space-y-4">
+                            <h3 class="text-2xl font-bold text-black">{{ $konten->judul }}</h3>
+                            <div>
+                                <h4 class="text-lg font-bold text-black mb-2">Syarat Pendaftaran :</h4>
+                                <div class="text-gray-700 leading-relaxed whitespace-pre-line text-base">
+                                    {{ $konten->isi }}
+                                </div>
+                            </div>
+                            <div class="pt-4">
+                                <button onclick="openEditModal('{{ $konten->id }}', '{{ addslashes($konten->judul) }}', {{ json_encode($konten->isi) }}, '{{ $kat->nama }}', '')" 
+                                        class="bg-[#FFB300] hover:bg-orange-500 text-white px-6 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition active:scale-95 shadow-sm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                    Edit
+                                </button>
                             </div>
                         </div>
                         @endforeach
-                    </div>
-                
-                {{-- 3. TENAGA PENGAJAR & PPDB --}}
-                @elseif ($kat->nama === 'Halaman Tenaga Pengajar' || $kat->nama === 'Tenaga Pengajar' || $kat->nama === 'Halaman Informasi PPDB' || $kat->nama === 'Informasi PPDB')
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10">
-                        @foreach($kat->konten as $konten)
-                        @php
-                            $foto = $konten->media->where('urutan', 0)->first();
-                            $fotoUrl = $foto ? asset('storage/' . $foto->file_path) : null;
-                            $isPPDB = str_contains(strtolower($kat->nama), 'ppdb');
-                        @endphp
-                        
-                        <div class="flex items-start gap-5">
-                            {{-- Jika PPDB, Sembunyikan Foto di Card --}}
-                            @if(!$isPPDB)
-                            <div class="flex-shrink-0 w-24 h-24">
-                                @if($fotoUrl)
-                                    <img src="{{ $fotoUrl }}" class="w-full h-full object-cover rounded-lg bg-gray-50 border border-gray-100 shadow-sm">
-                                @else
-                                    <div class="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 border border-gray-200">
-                                        <i class="fas fa-plus text-2xl"></i>
-                                    </div>
-                                @endif
-                            </div>
-                            @endif
 
-                            <div class="flex-1 min-w-0">
-                                <h3 class="text-lg font-bold text-black truncate mb-1">{{ $konten->judul }}</h3>
-                                @if(isset($konten->sub_judul) && $konten->sub_judul)
-                                    <p class="text-sm text-blue-600 font-semibold mb-1">{{ $konten->sub_judul }}</p>
-                                @endif
-                                <p class="text-sm text-gray-500 mb-4 line-clamp-2">{{ $konten->isi }}</p>
-                                
-                                <div class="flex gap-2">
-                                    <button onclick="openEditModal({{ $konten->id }})" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm transition flex items-center gap-1"><i class="fas fa-pen"></i> Edit</button>
-                                    
-                                    @if(!$isPPDB)
-                                    <button type="button" onclick="openHapusModal('{{ route('admin.konten.destroy', $konten->id) }}', 'Hapus Data', 'Yakin ingin menghapus data ini?')" class="bg-red-600 hover:bg-red-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm transition flex items-center gap-1"><i class="fas fa-trash-alt"></i> Hapus</button>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-                        @endforeach
-                    </div>
-
-                {{-- 4. DEFAULT (BERANDA & LAINNYA) --}}
-                @else
-                    <div class="space-y-6">
-                        @foreach($kat->konten as $konten)
-                        @php
-                            $isBeranda = ($kat->nama === 'Halaman Beranda' || $kat->nama === 'Beranda');
-                            $foto_utama = $konten->media->where('urutan', 0)->first();
-                        @endphp
-                        @if ($isBeranda)
-                            <div class="py-4 border-b border-gray-100 last:border-0">
-                                <div class="flex flex-col md:flex-row justify-between items-start gap-8">
-                                    <div class="flex-1 pl-4 md:pl-6">
-                                        <h3 class="text-2xl font-extrabold text-black mb-4">{{ $konten->judul }}</h3>
-                                        <p class="text-gray-700 text-base leading-relaxed mb-6">{{ $konten->isi }}</p>
-                                        <button class="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2.5 rounded-lg font-bold shadow-sm transition transform hover:-translate-y-0.5 flex items-center gap-2" onclick="openEditModal({{ $konten->id }})"><i class="fas fa-pen text-sm"></i> Edit</button>
-                                    </div>
-                                    @if ($foto_utama)
-                                    <div class="w-full md:w-1/3 flex-shrink-0">
-                                        {{-- FIX: object-cover diganti menjadi object-contain agar foto tidak terpotong --}}
-                                        <img src="{{ asset('storage/' . $foto_utama->file_path) }}" 
-                                            class="w-full h-48 object-contain rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition transform hover:scale-[1.02]">
-                                    </div>
-                                    @endif
-                                </div>
-                            </div>
-                        @else
-                            <div class="border border-gray-200 rounded-xl p-5 hover:border-blue-300 transition duration-300 bg-gray-50 hover:bg-white hover:shadow-md transform hover:-translate-y-1">
-                                <div class="flex justify-between items-start gap-4">
+                    {{-- 3. KATEGORI UMUM (EKSTRAKURIKULER, DLL) --}}
+                    @else
+                        <div class="space-y-10"> 
+                            @foreach($kat->konten as $konten)
+                                <div class="flex flex-col md:flex-row justify-between items-start gap-8 py-6 border-b last:border-0 group">
                                     <div class="flex-1">
-                                        <h3 class="text-lg font-bold text-black">{{ $konten->judul }}</h3>
-                                        <p class="mt-2 text-gray-600 text-sm leading-relaxed">{{ $konten->isi }}</p>
+                                        <h3 class="text-2xl font-bold text-black mb-1">{{ $konten->judul }}</h3>
+                                        <p class="text-gray-500 text-sm leading-relaxed text-justify @if($kat->nama !== 'Tentang Sekolah') mb-6 @endif whitespace-pre-line">
+                                            {{ $konten->isi }}
+                                        </p>
+                                        
+                                        @if($kat->nama !== 'Tentang Sekolah')
+                                        <div class="flex gap-3">
+                                            <button onclick="openEditModal('{{ $konten->id }}', '{{ addslashes($konten->judul) }}', {{ json_encode($konten->isi) }}, '{{ $kat->nama }}', '{{ $konten->media->where('urutan', 0)->first() ? asset('storage/' . $konten->media->where('urutan', 0)->first()->file_path) : '' }}')" 
+                                                    class="bg-[#F9A825] hover:bg-orange-600 text-white px-4 py-1.5 rounded-md text-sm font-bold flex items-center gap-2 transition active:scale-95">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                                Edit
+                                            </button>
+
+                                            @if($kat->nama !== 'Beranda')
+                                            <form action="{{ route('admin.konten.destroy', $konten->id) }}" method="POST" onsubmit="return confirmDelete(event, '{{ $kat->nama }}')">
+                                                @csrf @method('DELETE')
+                                                <button type="submit" class="bg-[#FF3B30] hover:bg-red-700 text-white px-4 py-1.5 rounded-md text-sm font-bold flex items-center gap-2 transition active:scale-95">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                    Hapus
+                                                </button>
+                                            </form>
+                                            @endif
+                                        </div>
+                                        @endif
                                     </div>
-                                    <div class="flex gap-2 flex-shrink-0">
-                                        <button class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition" onclick="openEditModal({{ $konten->id }})">Edit</button>
-                                        <button type="button" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition" onclick="openHapusModal('{{ route('admin.konten.destroy', $konten->id) }}', 'Hapus Konten', 'Yakin untuk menghapus konten ini?')">Hapus</button>
+
+                                    @if($kat->nama === 'Tentang Sekolah')
+                                    <div class="flex-shrink-0 mt-1">
+                                        <button onclick="openEditModal('{{ $konten->id }}', '{{ addslashes($konten->judul) }}', {{ json_encode($konten->isi) }}, '{{ $kat->nama }}', '')" 
+                                                class="bg-[#F9A825] hover:bg-orange-600 text-white px-4 py-1.5 rounded-md text-sm font-bold flex items-center gap-2 transition active:scale-95">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                            Edit
+                                        </button>
                                     </div>
+                                    @endif
+
+                                    @if($kat->nama === 'Ekstrakurikuler')
+                                    {{-- BAGIAN INI YANG DIUBAH --}}
+                                    <div class="flex flex-wrap gap-4 mt-4 md:mt-0">
+                                        @foreach($konten->media as $m)
+                                            {{-- UBAH: w-20 h-20 menjadi w-24 h-32 (persegi panjang vertikal) --}}
+                                            <div class="w-24 h-32 relative group">
+                                                {{-- UBAH: w-20 h-20 menjadi w-full h-full agar mengikuti container --}}
+                                                <img src="{{ asset('storage/' . $m->file_path) }}" class="w-full h-full object-cover rounded-lg border shadow-sm">
+                                                <form action="{{ route('admin.konten_media.destroy', $m->id) }}" method="POST" class="absolute -top-2 -right-2 hidden group-hover:block" onsubmit="return confirmDelete(event, 'Gambar')">
+                                                    @csrf @method('DELETE')
+                                                    {{-- UBAH: Hapus p-1, tambah w-6 h-6 flex center agar bulat sempurna --}}
+                                                    <button type="submit" class="bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md text-sm leading-none">&times;</button>
+                                                </form>
+                                            </div>
+                                        @endforeach
+                                        <form action="{{ route('admin.konten_media.store') }}" method="POST" enctype="multipart/form-data" id="quick-upload-{{ $konten->id }}">
+                                            @csrf
+                                            <input type="hidden" name="konten_id" value="{{ $konten->id }}">
+                                            <input type="file" name="file_path" id="input-quick-{{ $konten->id }}" class="hidden" onchange="document.getElementById('quick-upload-{{ $konten->id }}').submit()">
+                                            {{-- UBAH: w-20 h-20 menjadi w-24 h-32 (persegi panjang vertikal) --}}
+                                            <div onclick="document.getElementById('input-quick-{{ $konten->id }}').click()" class="w-24 h-32 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition text-gray-400 text-3xl">+</div>
+                                        </form>
+                                    </div>
+                                    @endif
                                 </div>
-                            </div>
-                        @endif 
-                        @endforeach
-                    </div>
-                @endif
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
             </div>
             @endforeach
         </main>
     </div>
 
-    {{-- MODAL EDIT --}}
-    <div id="modalEdit" class="hidden fixed inset-0 z-50 flex items-center justify-center">
-        <div id="modalEditBackdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm opacity-0 modal-backdrop-transition"></div>
-        <div id="modalEditContent" class="bg-white w-full max-w-2xl rounded-2xl p-8 shadow-2xl relative transform scale-95 opacity-0 modal-content-transition z-10">
-            <div class="text-center mb-8">
-                <h2 id="modalEditTitle" class="text-2xl font-bold text-gray-900 tracking-tight">Edit Konten</h2>
-            </div>
-            <form id="formEdit" method="POST" enctype="multipart/form-data" class="space-y-6">
-                @csrf @method('PUT')
-                <div>
-                    <label id="editLabelJudul" class="block text-gray-900 text-sm font-bold mb-2">Judul</label>
-                    <input type="text" id="editJudul" name="judul" class="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all" required>
-                </div>
-                <div id="editGroupSubJudul" class="hidden">
-                    <label id="editLabelSubJudul" class="block text-gray-900 text-sm font-bold mb-2">Sub Judul</label>
-                    <input type="text" id="editSubJudul" name="sub_judul" class="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all">
-                </div>
-                <div>
-                    <label id="editLabelIsi" class="block text-gray-900 text-sm font-bold mb-2">Deskripsi</label>
-                    <textarea id="editIsi" name="isi" rows="4" class="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all resize-none" required></textarea>
-                </div>
-                <div id="editFotoGroup">
-                    <label class="block text-gray-900 text-sm font-bold mb-2">Foto</label>
-                    <div class="flex items-center border border-gray-300 rounded-xl p-2 bg-gray-50/50 file-input-wrapper transition-colors">
-                        <input type="file" name="file_utama" accept="image/*" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-[#003366] file:text-white hover:file:bg-blue-900 cursor-pointer">
-                        <a id="linkLihatFoto" href="#" target="_blank" class="hidden text-sm text-[#003366] font-bold hover:underline whitespace-nowrap mr-4">Lihat foto saat ini</a>
-                    </div>
-                </div>
-                <div class="flex justify-end gap-3 mt-8 pt-4">
-                    <button type="button" onclick="closeModalAnimation('modalEdit')" class="px-6 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-bold bg-white hover:bg-gray-50 hover:border-gray-400 transition-all active:scale-95">Batal</button>
-                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-[#003366] text-white font-bold hover:bg-blue-900 shadow-lg shadow-blue-900/20 transition-all active:scale-95">Simpan Perubahan</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    {{-- MODAL TAMBAH --}}
+    {{-- MODAL TAMBAH & EDIT (TIDAK ADA PERUBAHAN) --}}
     <div id="modalTambah" class="hidden fixed inset-0 z-50 flex items-center justify-center">
-        <div id="modalTambahBackdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm opacity-0 modal-backdrop-transition"></div>
-        <div id="modalTambahContent" class="bg-white w-full max-w-2xl rounded-2xl p-8 shadow-2xl relative transform scale-95 opacity-0 modal-content-transition z-10">
-            <div class="text-center mb-8">
-                <h2 id="modalTitle" class="text-2xl font-bold text-gray-900 tracking-tight">Tambah Konten Baru</h2>
-            </div>
+        <div id="modalTambahBackdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm opacity-0 transition-opacity duration-300"></div>
+        <div id="modalTambahContent" class="bg-white w-full max-w-2xl rounded-2xl p-8 shadow-2xl relative transform scale-95 opacity-0 transition-all duration-300 z-10">
+            <h2 id="modalTambahTitle" class="text-2xl font-bold text-gray-900 text-center mb-8">Tambah Konten</h2>
             <form action="{{ route('admin.konten.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
                 @csrf
                 <input type="hidden" name="kategori_konten_id" id="tambahKategoriID">
                 <div>
-                    <label id="labelJudul" class="block text-gray-900 text-sm font-bold mb-2">Nama Ekstrakurikuler</label>
-                    <input type="text" id="inputJudul" name="judul" class="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all placeholder-gray-400">
-                    <div id="customDropdownContainer" class="custom-select-container hidden relative">
+                    <label id="labelJudul" class="block text-gray-900 text-sm font-bold mb-2">Judul</label>
+                    <input type="text" id="inputJudul" name="judul" class="w-full px-4 py-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-100">
+                    <div id="customDropdownContainer" class="hidden relative">
                         <input type="hidden" id="hiddenSelectValue" name="judul_select">
-                        <div class="custom-select-trigger border border-gray-300 rounded-xl px-4 py-3 flex justify-between items-center cursor-pointer hover:border-blue-500 transition-colors" id="customSelectTrigger">
-                            <span id="customSelectText" class="text-gray-700 font-medium">-- Pilih Bagian --</span>
-                            <svg class="arrow w-5 h-5 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        <div class="border border-gray-300 rounded-xl px-4 py-3 flex justify-between items-center cursor-pointer bg-white" id="customSelectTrigger">
+                            <span id="customSelectText">-- Pilih Bagian --</span>
+                            <svg id="dropdownArrow" class="w-4 h-4 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         </div>
-                        <div class="custom-select-options absolute w-full z-20 bg-white border border-gray-200 rounded-xl mt-2 shadow-xl overflow-hidden hidden" id="customSelectOptions"></div>
+                        <div id="customSelectOptions" class="absolute w-full z-30 bg-white border border-gray-200 rounded-xl mt-2 shadow-xl hidden"></div>
                     </div>
-                </div>
-                <div id="tambahGroupSubJudul" class="hidden">
-                    <label id="labelSubJudul" class="block text-gray-900 text-sm font-bold mb-2">Sub Judul</label>
-                    <input type="text" id="inputSubJudul" name="sub_judul" class="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all placeholder-gray-400">
                 </div>
                 <div>
-                    <label id="labelIsi" class="block text-gray-900 text-sm font-bold mb-2">Deskripsi</label>
-                    <textarea id="inputIsi" name="isi" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all resize-none placeholder-gray-400" required></textarea>
+                    <label id="labelIsi" class="block text-gray-900 text-sm font-bold mb-2">Isi Penjelasan</label>
+                    <textarea name="isi" id="inputIsi" rows="8" class="w-full px-4 py-3 border border-gray-300 rounded-xl resize-none outline-none focus:ring-2 focus:ring-blue-100" required></textarea>
                 </div>
                 <div id="tambahFotoGroup">
-                    <label class="block text-gray-900 text-sm font-bold mb-2">Foto</label>
-                    <div class="flex items-center border border-gray-300 rounded-xl p-2 bg-gray-50/50 file-input-wrapper transition-colors">
-                        <input type="file" name="file_utama" accept="image/*" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-[#003366] file:text-white hover:file:bg-blue-900 cursor-pointer">
+                    <label id="labelFoto" class="block text-gray-900 text-sm font-bold mb-2">Foto Utama</label>
+                    <input type="file" name="file_utama" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                </div>
+                <div class="flex justify-end gap-3 mt-8">
+                    <button type="button" onclick="closeModalAnimation('modalTambah')" class="px-6 py-2.5 border border-gray-300 rounded-xl font-bold hover:bg-gray-50 transition">Batal</button>
+                    <button type="submit" class="px-6 py-2.5 bg-[#003366] text-white rounded-xl font-bold hover:bg-blue-900 transition shadow-lg">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modalEdit" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+        <div id="modalEditBackdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm opacity-0 transition-opacity duration-300"></div>
+        <div id="modalEditContent" class="bg-white w-full max-w-2xl rounded-2xl p-8 shadow-2xl relative transform scale-95 opacity-0 transition-all duration-300 z-10">
+            <h2 id="modalEditTitle" class="text-2xl font-bold text-gray-900 text-center mb-8">Edit Konten</h2>
+            <form id="formEdit" action="" method="POST" enctype="multipart/form-data" class="space-y-6">
+                @csrf @method('PUT')
+                <div>
+                    <label id="labelEditJudul" class="block text-gray-900 text-sm font-bold mb-2">Judul</label>
+                    <input type="text" id="editJudul" name="judul" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-100 outline-none">
+                </div>
+                <div>
+                    <label id="labelEditIsi" class="block text-gray-900 text-sm font-bold mb-2">Isi Penjelasan</label>
+                    <textarea name="isi" id="editIsi" rows="8" class="w-full px-4 py-3 border border-gray-300 rounded-xl resize-none outline-none focus:ring-2 focus:ring-blue-100" required></textarea>
+                </div>
+                <div id="editFotoGroup" class="space-y-3">
+                    <div id="previewContainer" class="hidden">
+                        <label id="labelEditFotoLama" class="block text-gray-900 text-sm font-bold mb-2">Foto Saat Ini</label>
+                        <img id="imgPreview" src="" class="w-40 h-auto rounded-lg border shadow-sm mb-2">
                     </div>
+                    <label id="labelEditFoto" class="block text-gray-900 text-sm font-bold mb-2">Ganti Foto (Opsional)</label>
+                    <input type="file" name="file_utama" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                 </div>
-                <div class="flex justify-end gap-3 mt-8 pt-4">
-                    <button type="button" onclick="closeModalAnimation('modalTambah')" class="px-6 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-bold bg-white hover:bg-gray-50 hover:border-gray-400 transition-all active:scale-95">Batal</button>
-                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-[#003366] text-white font-bold hover:bg-blue-900 shadow-lg shadow-blue-900/20 transition-all active:scale-95">Simpan</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    {{-- MODAL HAPUS --}}
-    <div id="modalHapus" class="hidden fixed inset-0 z-50 flex items-center justify-center">
-        <div id="modalHapusBackdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm opacity-0 modal-backdrop-transition"></div>
-        <div id="modalHapusContent" class="bg-white w-full max-w-md rounded-2xl p-8 shadow-2xl relative transform scale-95 opacity-0 modal-content-transition z-10 text-center">
-            <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <i class="fas fa-trash-alt text-3xl text-red-600"></i>
-            </div>
-            <h2 id="modalHapusTitle" class="text-2xl font-bold text-gray-900 mb-3">Hapus Konten</h2>
-            <p id="modalHapusMessage" class="text-gray-600 text-lg mb-8 leading-relaxed">Yakin ingin menghapus item ini? Tindakan ini tidak dapat dibatalkan.</p>
-            <form id="formHapus" method="POST" class="flex justify-center gap-3">
-                @csrf @method('DELETE')
-                <button type="button" onclick="closeModalAnimation('modalHapus')" class="px-6 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-bold bg-white hover:bg-gray-50 transition-all active:scale-95">Batal</button>
-                <button type="submit" class="px-6 py-2.5 rounded-xl bg-red-600 text-white font-bold hover:bg-red-700 shadow-lg shadow-red-600/30 transition-all active:scale-95">Hapus</button>
-            </form>
-        </div>
-    </div>
-
-    {{-- MODAL MEDIA --}}
-    <div id="modalMedia" class="hidden fixed inset-0 z-50 flex items-center justify-center">
-        <div id="modalMediaBackdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm opacity-0 modal-backdrop-transition"></div>
-        <div id="modalMediaContent" class="bg-white w-96 rounded-2xl p-8 shadow-2xl relative transform scale-95 opacity-0 modal-content-transition z-10">
-            <h2 class="text-xl font-bold mb-6 text-gray-900">Tambah Galeri Foto</h2>
-            <form action="{{ route('admin.konten_media.store') }}" method="POST" enctype="multipart/form-data">
-                @csrf
-                <input type="hidden" name="konten_id" id="mediaKontenID">
-                <div class="mb-6 border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:bg-gray-50 hover:border-blue-400 transition-all cursor-pointer relative group">
-                    <input type="file" name="file_path" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" required>
-                    <div class="group-hover:scale-110 transition-transform duration-300">
-                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-3 group-hover:text-blue-500"></i>
-                    </div>
-                    <p class="text-sm text-gray-500 font-medium">Klik untuk upload foto</p>
-                </div>
-                <div class="flex justify-end gap-3">
-                    <button type="button" onclick="closeModalAnimation('modalMedia')" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg font-bold hover:bg-gray-50">Batal</button>
-                    <button type="submit" class="px-4 py-2 bg-[#003366] text-white rounded-lg font-bold hover:bg-blue-900 shadow-md">Upload</button>
+                <div class="flex justify-end gap-3 mt-8">
+                    <button type="button" onclick="closeModalAnimation('modalEdit')" class="px-6 py-2.5 border border-gray-300 rounded-xl font-bold hover:bg-gray-50 transition">Batal</button>
+                    <button type="submit" class="px-6 py-2.5 bg-[#003366] text-white rounded-xl font-bold hover:bg-blue-900 transition shadow-lg">Simpan</button>
                 </div>
             </form>
         </div>
     </div>
 
-    {{-- SCRIPT JAVASCRIPT --}}
+    {{-- SCRIPT (TIDAK ADA PERUBAHAN) --}}
     <script>
+    function confirmDelete(event, itemName) {
+        event.preventDefault();
+        const form = event.target;
+        Swal.fire({
+            title: 'Hapus ' + itemName,
+            text: 'Yakin untuk menghapus ' + itemName.toLowerCase() + '?',
+            showCancelButton: true,
+            confirmButtonText: 'Hapus',
+            cancelButtonText: 'Batal',
+            reverseButtons: false, 
+            buttonsStyling: true,
+            customClass: {}
+        }).then((result) => {
+            if (result.isConfirmed) {
+                form.submit();
+            }
+        });
+    }
+
     function openModalAnimation(modalId) {
         const modal = document.getElementById(modalId);
-        const backdrop = document.getElementById(modalId + 'Backdrop');
-        const content = document.getElementById(modalId + 'Content');
         modal.classList.remove('hidden');
         setTimeout(() => {
-            backdrop.classList.remove('opacity-0');
+            document.getElementById(modalId + 'Backdrop').classList.remove('opacity-0');
+            const content = document.getElementById(modalId + 'Content');
             content.classList.remove('opacity-0', 'scale-95');
             content.classList.add('scale-100');
         }, 10);
     }
+
     function closeModalAnimation(modalId) {
         const modal = document.getElementById(modalId);
-        const backdrop = document.getElementById(modalId + 'Backdrop');
+        if(!modal) return;
+        document.getElementById(modalId + 'Backdrop').classList.add('opacity-0');
         const content = document.getElementById(modalId + 'Content');
-        backdrop.classList.add('opacity-0');
-        content.classList.remove('scale-100');
-        content.classList.add('opacity-0', 'scale-95');
-        setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        content.classList.replace('scale-100', 'scale-95');
+        content.classList.add('opacity-0');
+        setTimeout(() => modal.classList.add('hidden'), 300);
     }
 
-    // --- LOGIKA UTAMA ---
-
-    function openTambahModal(id, kategoriNama, availableOptions = []) {
-        document.getElementById('tambahKategoriID').value = id;
-        
-        const modalTitle = document.getElementById('modalTitle');
-        const labelJudul = document.getElementById('labelJudul');
-        const inputJudul = document.getElementById('inputJudul');
-        const dropdownContainer = document.getElementById('customDropdownContainer');
-        const hiddenSelectValue = document.getElementById('hiddenSelectValue');
-        const dropdownOptions = document.getElementById('customSelectOptions');
-        const dropdownTrigger = document.getElementById('customSelectTrigger');
-        const labelIsi   = document.getElementById('labelIsi');
-        const inputIsi   = document.getElementById('inputIsi');
-        const fotoGroup  = document.getElementById('tambahFotoGroup');
-        const groupSubJudul = document.getElementById('tambahGroupSubJudul');
-        const inputSubJudul = document.getElementById('inputSubJudul');
-
-        inputJudul.value = '';
-        inputIsi.value = '';
-        inputSubJudul.value = '';
-        hiddenSelectValue.value = '';
-        document.getElementById('customSelectText').innerText = '-- Pilih Bagian --';
-        
-        groupSubJudul.classList.add('hidden');
-        fotoGroup.classList.remove('hidden');
-
-        if (kategoriNama === 'Halaman Tentang Sekolah' || kategoriNama === 'Tentang Sekolah') {
-            modalTitle.innerText = 'Tambah Tentang Sekolah';
-            labelJudul.innerText = 'Bagian';
-            inputJudul.classList.add('hidden'); inputJudul.removeAttribute('name'); 
-            dropdownContainer.classList.remove('hidden'); hiddenSelectValue.setAttribute('name', 'judul');
-            dropdownOptions.innerHTML = ''; 
-            if (availableOptions.length === 0) {
-                document.getElementById('customSelectText').innerText = 'Semua bagian sudah diisi';
-            } else {
-                availableOptions.forEach(opt => {
-                    const optionDiv = document.createElement('div');
-                    optionDiv.className = 'px-4 py-3 hover:bg-blue-50 cursor-pointer text-gray-700 border-b border-gray-100 last:border-0 transition-colors';
-                    optionDiv.innerText = opt;
-                    optionDiv.setAttribute('data-value', opt);
-                    optionDiv.onclick = function(e) {
-                        hiddenSelectValue.value = this.getAttribute('data-value');
-                        document.getElementById('customSelectText').innerText = this.innerText;
-                        document.getElementById('customSelectText').classList.add('text-gray-900', 'font-bold');
-                        dropdownContainer.classList.remove('open');
-                        document.getElementById('customSelectOptions').classList.add('hidden');
-                        e.stopPropagation();
-                    };
-                    dropdownOptions.appendChild(optionDiv);
-                });
-            }
-            dropdownTrigger.onclick = function(e) {
-                if (availableOptions.length > 0) {
-                    document.getElementById('customSelectOptions').classList.toggle('hidden');
-                    dropdownTrigger.classList.toggle('ring-2');
-                    dropdownTrigger.classList.toggle('ring-blue-100');
+    function enableAutoNumbering(textareaId) {
+        const textarea = document.getElementById(textareaId);
+        if(!textarea) return;
+        textarea.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                const cursorPos = this.selectionStart;
+                const textBeforeCursor = this.value.substring(0, cursorPos);
+                const lines = textBeforeCursor.split('\n');
+                const lastLine = lines[lines.length - 1];
+                const match = lastLine.match(/^(\d+)\.\s*/);
+                if (match) {
+                    e.preventDefault();
+                    const nextNum = parseInt(match[1]) + 1;
+                    const newLineStr = `\n${nextNum}. `;
+                    const textAfterCursor = this.value.substring(cursorPos);
+                    this.value = textBeforeCursor + newLineStr + textAfterCursor;
+                    const newPos = cursorPos + newLineStr.length;
+                    this.setSelectionRange(newPos, newPos);
                 }
-                e.stopPropagation();
-            };
-            labelIsi.innerText = 'Isi Penjelasan';
-            inputIsi.placeholder = 'Tuliskan detailnya di sini...';
-            fotoGroup.classList.add('hidden');
+            }
+        });
+    }
+    enableAutoNumbering('inputIsi');
+    enableAutoNumbering('editIsi');
 
-        } else if (kategoriNama.includes('Ekstrakurikuler')) {
-            modalTitle.innerText = 'Tambah Ekstrakurikuler';
-            labelJudul.innerText = 'Nama Ekstrakurikuler';
-            inputJudul.placeholder = 'Contoh: Pramuka';
-            inputJudul.classList.remove('hidden'); inputJudul.setAttribute('name', 'judul');
-            dropdownContainer.classList.add('hidden'); hiddenSelectValue.removeAttribute('name');
-            labelIsi.innerText = 'Deskripsi';
-            inputIsi.placeholder = 'Melatih kemandirian...';
-            fotoGroup.classList.remove('hidden');
+    function openTambahModal(id, kategoriNama, options = []) {
+        document.getElementById('tambahKategoriID').value = id;
+        const modalTitle = document.getElementById('modalTambahTitle');
+        const labelJudul = document.getElementById('labelJudul');
+        const labelIsi = document.getElementById('labelIsi');
+        const labelFoto = document.getElementById('labelFoto');
+        const fotoGroup = document.getElementById('tambahFotoGroup');
+        const inputIsi = document.getElementById('inputIsi');
+        const dropdown = document.getElementById('customDropdownContainer');
+        const inputTeks = document.getElementById('inputJudul');
+        const hiddenInput = document.getElementById('hiddenSelectValue');
 
-        } else if (kategoriNama.includes('Tenaga Pengajar')) {
-            modalTitle.innerText = 'Tambah Tenaga Pengajar';
-            labelJudul.innerText = 'Nama Guru';
-            inputJudul.placeholder = 'Contoh: Ahmad Dahlan';
-            inputJudul.classList.remove('hidden'); inputJudul.setAttribute('name', 'judul');
-            dropdownContainer.classList.add('hidden'); hiddenSelectValue.removeAttribute('name');
-            labelIsi.innerText = 'Jabatan';
-            inputIsi.placeholder = 'Contoh: Kepala Sekolah / Guru Matematika';
-            fotoGroup.classList.remove('hidden');
+        modalTitle.innerText = "Tambah Konten";
+        labelJudul.innerText = "Judul";
+        labelIsi.innerText = "Isi Penjelasan";
+        labelFoto.innerText = "Foto Utama";
+        fotoGroup.classList.remove('hidden');
+        inputIsi.value = '';
 
-        } else if (kategoriNama.includes('PPDB')) {
-            modalTitle.innerText = 'Tambah Informasi PPDB';
-            labelJudul.innerText = 'Judul';
-            inputJudul.placeholder = 'Contoh: Alur Pendaftaran';
-            inputJudul.classList.remove('hidden'); inputJudul.setAttribute('name', 'judul');
-            dropdownContainer.classList.add('hidden'); hiddenSelectValue.removeAttribute('name');
-            groupSubJudul.classList.remove('hidden'); inputSubJudul.placeholder = 'Contoh: Tahun Ajaran 2025/2026';
-            labelIsi.innerText = 'Isi / Keterangan';
-            inputIsi.placeholder = 'Jelaskan detail informasi di sini...';
-            fotoGroup.classList.add('hidden');
-
-        } else {
-            modalTitle.innerText = 'Tambah Konten Baru';
-            labelJudul.innerText = 'Judul Konten';
-            inputJudul.classList.remove('hidden'); inputJudul.setAttribute('name', 'judul');
-            dropdownContainer.classList.add('hidden'); hiddenSelectValue.removeAttribute('name');
-            labelIsi.innerText = 'Isi / Deskripsi';
-            inputIsi.placeholder = 'Tulis deskripsi konten di sini...';
-            fotoGroup.classList.remove('hidden');
+        if (kategoriNama === 'Tenaga Pengajar') {
+            modalTitle.innerText = "Tambah Tenaga Pengajar";
+            labelJudul.innerText = "Nama Guru";
+            labelIsi.innerText = "Jabatan";
+            labelFoto.innerText = "Foto Guru";
+        } else if (kategoriNama === 'Ekstrakurikuler') {
+            modalTitle.innerText = "Tambah Ekstrakurikuler";
+            labelJudul.innerText = "Nama Ekstrakurikuler";
+            labelIsi.innerText = "Deskripsi";
+        } else if (kategoriNama === 'Informasi PPDB') {
+            modalTitle.innerText = "Tambah Informasi PPDB";
+            labelJudul.innerText = "Judul";
+            labelIsi.innerText = "Syarat Pendaftaran";
+            fotoGroup.classList.add('hidden'); 
+            inputIsi.value = "1. "; 
         }
-        
+
+        if (kategoriNama === 'Tentang Sekolah') {
+            inputTeks.classList.add('hidden');
+            inputTeks.removeAttribute('name');
+            dropdown.classList.remove('hidden');
+            hiddenInput.setAttribute('name', 'judul');
+            fotoGroup.classList.add('hidden');
+            const optionsList = document.getElementById('customSelectOptions');
+            const selectText = document.getElementById('customSelectText');
+            const arrow = document.getElementById('dropdownArrow');
+            optionsList.innerHTML = '';
+            options.forEach(opt => {
+                const item = document.createElement('div');
+                item.className = 'px-4 py-3 hover:bg-blue-50 cursor-pointer text-gray-700 border-b last:border-0';
+                item.innerText = opt;
+                item.onclick = (e) => {
+                    e.stopPropagation();
+                    hiddenInput.value = opt;
+                    selectText.innerText = opt;
+                    optionsList.classList.add('hidden');
+                    arrow.style.transform = 'rotate(0deg)';
+                };
+                optionsList.appendChild(item);
+            });
+            document.getElementById('customSelectTrigger').onclick = (e) => {
+                e.stopPropagation();
+                const isHidden = optionsList.classList.toggle('hidden');
+                arrow.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(180deg)';
+            };
+        } else {
+            inputTeks.classList.remove('hidden');
+            inputTeks.setAttribute('name', 'judul');
+            dropdown.classList.add('hidden');
+            hiddenInput.removeAttribute('name');
+        }
         openModalAnimation('modalTambah');
     }
 
-    function openEditModal(id) {
-        document.getElementById('formEdit').reset();
+    function openEditModal(id, judul, isi, kategoriNama, imageUrl) {
+        const form = document.getElementById('formEdit');
+        form.action = `/admin/konten/${id}`; 
+        const modalTitle = document.getElementById('modalEditTitle');
+        const labelJudul = document.getElementById('labelEditJudul');
+        const labelIsi = document.getElementById('labelEditIsi');
+        const fotoGroup = document.getElementById('editFotoGroup');
+        const inputJudul = document.getElementById('editJudul');
+        const inputIsi = document.getElementById('editIsi');
 
-        fetch(`/admin/konten/json/${id}`)
-            .then(res => res.json())
-            .then(data => {
-                const modalTitle = document.getElementById('modalEditTitle');
-                const labelJudul = document.getElementById('editLabelJudul');
-                const inputJudul = document.getElementById('editJudul');
-                const labelIsi = document.getElementById('editLabelIsi');
-                const inputIsi = document.getElementById('editIsi');
-                const editFotoGroup = document.getElementById('editFotoGroup');
-                const linkLihatFoto = document.getElementById('linkLihatFoto');
-                const groupSubJudul = document.getElementById('editGroupSubJudul');
-                const inputSubJudul = document.getElementById('editSubJudul');
+        fotoGroup.classList.add('hidden');
+        inputJudul.readOnly = false;
+        inputJudul.classList.remove('bg-gray-100');
 
-                inputJudul.value = data.judul;
-                inputIsi.value = data.isi;
-                if(data.sub_judul) inputSubJudul.value = data.sub_judul; else inputSubJudul.value = '';
-                document.getElementById('formEdit').action = `/admin/konten/${id}`;
-                
-                let kategoriNama = data.kategori_nama || (data.kategori ? data.kategori.nama : '');
-                kategoriNama = kategoriNama.toLowerCase().trim();
-
-                groupSubJudul.classList.add('hidden');
-                editFotoGroup.classList.remove('hidden');
-                inputJudul.readOnly = false; inputJudul.classList.remove('bg-gray-100', 'text-gray-500', 'cursor-not-allowed');
-
-                if (kategoriNama.includes('ekstrakurikuler')) {
-                    modalTitle.innerText = 'Edit Ekstrakurikuler';
-                    labelJudul.innerText = 'Nama Ekstrakurikuler';
-                    labelIsi.innerText = 'Deskripsi';
-                
-                } else if (kategoriNama.includes('tentang sekolah')) {
-                    modalTitle.innerText = 'Edit Tentang Sekolah';
-                    labelJudul.innerText = 'Bagian';
-                    labelIsi.innerText = 'Isi';
-                    inputJudul.readOnly = true; inputJudul.classList.add('bg-gray-100', 'text-gray-500', 'cursor-not-allowed');
-                    editFotoGroup.classList.add('hidden');
-                
-                } else if (kategoriNama.includes('tenaga pengajar')) {
-                    modalTitle.innerText = 'Edit Tenaga Pengajar';
-                    labelJudul.innerText = 'Nama Guru';
-                    labelIsi.innerText = 'Jabatan';
-
-                } else if (kategoriNama.includes('ppdb')) {
-                    modalTitle.innerText = 'Edit Informasi PPDB';
-                    labelJudul.innerText = 'Judul';
-                    groupSubJudul.classList.remove('hidden');
-                    labelIsi.innerText = 'Isi / Keterangan';
-                    editFotoGroup.classList.add('hidden');
-
-                } else if (kategoriNama.includes('beranda')) {
-                    modalTitle.innerText = 'Edit Halaman Beranda';
-                    labelJudul.innerText = 'Judul';
-                    labelIsi.innerText = 'Deskripsi';
-                
-                } else {
-                    modalTitle.innerText = 'Edit Konten';
-                    labelJudul.innerText = 'Judul';
-                    labelIsi.innerText = 'Deskripsi';
-                }
-
-                if (!editFotoGroup.classList.contains('hidden')) {
-                    if (data.file_utama_url) {
-                        linkLihatFoto.href = data.file_utama_url;
-                        linkLihatFoto.classList.remove('hidden');
-                    } else {
-                        linkLihatFoto.href = '#';
-                        linkLihatFoto.classList.add('hidden');
-                    }
-                }
-            })
-            .catch(err => console.error("Error Fetching:", err));
-
+        if (kategoriNama === 'Tenaga Pengajar') {
+            modalTitle.innerText = "Edit Tenaga Pengajar";
+            labelJudul.innerText = "Nama Guru";
+            labelIsi.innerText = "Jabatan";
+        } else if (kategoriNama === 'Informasi PPDB') {
+            modalTitle.innerText = "Edit Informasi PPDB";
+            labelJudul.innerText = "Judul";
+            labelIsi.innerText = "Syarat Pendaftaran";
+        } else if (kategoriNama === 'Ekstrakurikuler') {
+            modalTitle.innerText = "Edit Ekstrakurikuler";
+            labelJudul.innerText = "Nama Ekstrakurikuler";
+            labelIsi.innerText = "Deskripsi";
+        } else if (kategoriNama === 'Tentang Sekolah') {
+            modalTitle.innerText = "Edit Bagian " + judul;
+            inputJudul.readOnly = true;
+            inputJudul.classList.add('bg-gray-100');
+        } else if (kategoriNama === 'Beranda') {
+            modalTitle.innerText = "Edit Konten Beranda";
+            fotoGroup.classList.remove('hidden');
+            const previewContainer = document.getElementById('previewContainer');
+            const imgPreview = document.getElementById('imgPreview');
+            if (imageUrl) {
+                imgPreview.src = imageUrl;
+                previewContainer.classList.remove('hidden');
+            } else {
+                previewContainer.classList.add('hidden');
+            }
+        }
+        inputJudul.value = judul;
+        inputIsi.value = isi;
         openModalAnimation('modalEdit');
     }
 
-    function openHapusModal(url, title, message) {
-        const form = document.getElementById('formHapus');
-        const titleEl = document.getElementById('modalHapusTitle');
-        const msgEl = document.getElementById('modalHapusMessage');
-        form.action = url;
-        if (title) titleEl.innerText = title;
-        if (message) msgEl.innerText = message;
-        openModalAnimation('modalHapus');
-    }
-    
-    function openMediaModal(id) { 
-        document.getElementById('mediaKontenID').value = id; 
-        openModalAnimation('modalMedia'); 
-    }
-
-    window.addEventListener('click', function(e) {
-        const dropdownOptions = document.getElementById('customSelectOptions');
-        const dropdownTrigger = document.getElementById('customSelectTrigger');
-        if (dropdownOptions && !dropdownOptions.contains(e.target) && !dropdownTrigger.contains(e.target)) {
-            dropdownOptions.classList.add('hidden');
+    window.onclick = (e) => {
+        if (e.target.id && e.target.id.includes('Backdrop')) {
+            closeModalAnimation('modalTambah');
+            closeModalAnimation('modalEdit');
         }
-        if(e.target.id.includes('Backdrop')) {
-            const modalId = e.target.id.replace('Backdrop', '');
-            closeModalAnimation(modalId);
-        }
-    });
+    };
     </script>
 
 @endsection
