@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,25 +7,25 @@
 
         <title>{{ config('app.name', 'Laravel') }}</title>
 
-        <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
-        <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
-    </head>
-    <body class="font-sans text-gray-900 antialiased">
-        
-        {{-- BAGIAN INI KITA UBAH --}}
-        <div class="min-h-screen bg-gray-100">
-            
-            {{-- 1. Panggil Navbar di sini --}}
-            {{-- Kita bungkus dengan container agar padding-nya konsisten --}}
-            <div class="max-w-7xl mx-auto px-6 lg:px-8">
-                @include('partials.navbar')
-            </div>
 
-            {{-- 2. Konten utama ($slot) akan ditampilkan di bawah navbar --}}
+        <style>
+            /* Jarak scroll agar konten tidak tertutup sticky navbar */
+            section[id], main[id], .scroll-mt-fix {
+                scroll-margin-top: 100px;
+            }
+        </style>
+    </head>
+    <body class="font-sans text-gray-900 antialiased bg-white">
+        
+        {{-- 1. Navbar diletakkan di sini tanpa pembungkus container agar FULL WIDTH --}}
+        @include('partials.navbar')
+
+        {{-- 2. Konten utama ($slot) --}}
+        <div class="min-h-screen">
             <main>
                 {{ $slot }}
             </main>
