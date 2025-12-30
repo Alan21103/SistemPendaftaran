@@ -28,8 +28,20 @@ class AdminPembayaranController extends Controller
             $pembayaranQuery->whereHas('pendaftaran', function ($query) use ($search) {
                 $query->where('nama_siswa', 'like', "%$search%")
                     ->orWhere('nisn', 'like', "%$search%")
-                    ->orWhere('asal_sekolah', 'like', "%$search%");
+                    ->orWhere('asal_sekolah', 'like', "%$search%")
+                    ->orWhere('no_telp', 'like', "%$search%");
             });
+        }
+
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            // Filter berdasarkan range tanggal
+            $pembayaranQuery->whereBetween('created_at', [
+                $request->start_date . ' 00:00:00',
+                $request->end_date . ' 23:59:59'
+            ]);
+        } elseif ($request->filled('start_date')) {
+            // Jika hanya isi tanggal awal, cari yang sama dengan tanggal tersebut
+            $pembayaranQuery->whereDate('created_at', $request->start_date);
         }
 
         // 3. Filter Status (Lunas, Belum Lunas)

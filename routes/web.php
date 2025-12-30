@@ -137,6 +137,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/pembayaran/verify/{id}', [AdminPembayaranController::class, 'verify'])->name('pembayaran.verify');
         Route::post('/pembayaran/reject/{id}', [AdminPembayaranController::class, 'reject'])->name('pembayaran.reject');
         Route::get('/pembayaran/bukti/{pembayaran}', [AdminPembayaranController::class, 'viewBukti'])->name('pembayaran.view-bukti');
+        Route::get('/pembayaran/export', [AdminExportController::class, 'exportPembayaran'])->name('export.pembayaran');
     });
 });
 

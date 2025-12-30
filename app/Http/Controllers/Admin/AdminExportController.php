@@ -19,4 +19,11 @@ class AdminExportController extends Controller
 
         return Excel::download(new \App\Exports\PendaftaranExport, $fileName);
     }
+
+    public function exportPembayaran()
+    {
+        $fileName = 'data_pembayaran_' . date('Y-m-d_His') . '.xlsx';
+
+        return Excel::download(new \App\Exports\PembayaranExport, $fileName);
+    }
 }
