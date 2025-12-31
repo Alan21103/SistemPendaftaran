@@ -88,94 +88,92 @@
                 <x-pageheadersatu title="Kelola Pembayaran"
                     description="Verifikasi bukti transfer dan pantau tagihan siswa di sini!" />
 
+                {{-- Toolbar --}}
                 <div class="mb-6 flex flex-col gap-3 items-start">
                     <h2 class="text-xl font-semibold text-black">Daftar Pembayaran</h2>
                     <a href="{{ route('admin.export.pembayaran') }}"
                         class="inline-flex items-center gap-2 bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 font-medium py-2 px-4 rounded-lg shadow-sm transition">
                         <img src="{{ asset('icons/export.svg') }}" alt="Export Excel Icon" class="h-5 w-5">
-                        Ekspor Excel
+                        Export Excel
                     </a>
                 </div>
+
                 {{-- Filter Bar --}}
-                <div class="mb-6 mt-8">
+                <div class="mb-6">
                     <form id="filterForm" action="{{ route('admin.pembayaran.index') }}" method="GET"
                         class="flex flex-wrap items-center gap-3">
 
-                        {{-- 1. Search Input --}}
-                        <div class="flex-1 min-w-[200px] max-w-md relative">
-                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]"></i>
+                        {{-- 1. Search Input (Ukuran disamakan dengan Pendaftaran) --}}
+                        <div class="flex-1 min-w-[200px] max-w-3xl relative">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
                             <input type="text" name="search" id="searchInput"
                                 placeholder="Cari nama siswa, NISN, No Telepon atau sekolah..."
-                                value="{{ request('search') }}" oninput="doSearch()" {{-- Panggil fungsi debounce --}}
-                                class="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-300 bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-xs shadow-sm">
+                                value="{{ request('search') }}" oninput="doSearch()"
+                                class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 bg-white focus:ring-blue-500 focus:border-blue-500 text-sm shadow-sm">
                         </div>
 
-                        {{-- 2. Date Range Picker (Auto Submit) --}}
-                        <div class="flex items-center bg-white border border-gray-300 rounded-lg px-3 shadow-sm hover:border-blue-400 transition-colors"
-                            style="height: 38px;"> {{-- Mengunci tinggi agar sama dengan input lainnya --}}
+                        {{-- 2. Date Range Picker (Tinggi disamakan: py-2.5 atau h-[46px]) --}}
+                        <div
+                            class="flex items-center bg-white border border-gray-300 rounded-lg px-3 shadow-sm hover:border-blue-400 transition-colors h-[46px]">
 
                             {{-- Input Dari --}}
                             <div class="flex items-center gap-2">
-                                <label
-                                    class="text-[9px] font-black text-gray-400 uppercase tracking-tighter leading-none">Dari</label>
+                                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Dari</label>
                                 <input type="date" name="start_date" value="{{ request('start_date') }}"
                                     onchange="document.getElementById('filterForm').submit()"
-                                    class="border-none p-0 text-xs focus:ring-0 cursor-pointer text-gray-600 bg-transparent outline-none min-w-[100px]"
-                                    style="line-height: 1;">
+                                    class="border-none p-0 text-sm focus:ring-0 cursor-pointer text-gray-600 bg-transparent outline-none">
                             </div>
 
                             {{-- Separator --}}
-                            <div class="h-4 w-[1px] bg-gray-200 mx-2"></div>
+                            <div class="h-5 w-[1px] bg-gray-200 mx-3"></div>
 
                             {{-- Input Ke --}}
                             <div class="flex items-center gap-2">
-                                <label
-                                    class="text-[9px] font-black text-gray-400 uppercase tracking-tighter leading-none">Ke</label>
+                                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Ke</label>
                                 <input type="date" name="end_date" value="{{ request('end_date') }}"
                                     onchange="document.getElementById('filterForm').submit()"
-                                    class="border-none p-0 text-xs focus:ring-0 cursor-pointer text-gray-600 bg-transparent outline-none min-w-[100px]"
-                                    style="line-height: 1;">
+                                    class="border-none p-0 text-sm focus:ring-0 cursor-pointer text-gray-600 bg-transparent outline-none">
                             </div>
                         </div>
 
-                        {{-- 3. Dropdown Status (Menggunakan JS Anda) --}}
+                        {{-- 3. Dropdown Status --}}
                         <div class="custom-select-container" id="dropdownStatus">
                             <input type="hidden" name="status" value="{{ request('status') }}">
-                            <div class="custom-select-trigger py-2 min-w-[120px]">
+                            <div class="custom-select-trigger py-2.5 min-w-[140px]">
                                 <span
-                                    class="text-xs">{{ request('status') ? ucfirst(request('status')) : 'Semua Status' }}</span>
-                                <i class="fas fa-chevron-down arrow text-[9px]"></i>
+                                    class="text-sm">{{ request('status') ? ucfirst(request('status')) : 'Semua Status' }}</span>
+                                <i class="fas fa-chevron-down arrow text-xs"></i>
                             </div>
                             <div class="custom-select-options">
-                                <div class="custom-select-option text-xs" data-value="">Semua Status</div>
+                                <div class="custom-select-option text-sm" data-value="">Semua Status</div>
                                 @foreach ($list_status as $status)
-                                    <div class="custom-select-option text-xs" data-value="{{ $status }}">{{ ucfirst($status) }}
+                                    <div class="custom-select-option text-sm" data-value="{{ $status }}">{{ ucfirst($status) }}
                                     </div>
                                 @endforeach
                             </div>
                         </div>
 
-                        {{-- 4. Dropdown Sekolah (Menggunakan JS Anda) --}}
+                        {{-- 4. Dropdown Sekolah --}}
                         <div class="custom-select-container" id="dropdownSekolah">
                             <input type="hidden" name="asal_sekolah" value="{{ request('asal_sekolah') }}">
-                            <div class="custom-select-trigger py-2 min-w-[140px]">
+                            <div class="custom-select-trigger py-2.5 min-w-[160px]">
                                 <span
-                                    class="truncate max-w-[100px] text-xs">{{ request('asal_sekolah') ? request('asal_sekolah') : 'Semua Sekolah' }}</span>
-                                <i class="fas fa-chevron-down arrow text-[9px]"></i>
+                                    class="truncate max-w-[120px] text-sm">{{ request('asal_sekolah') ? request('asal_sekolah') : 'Semua Sekolah' }}</span>
+                                <i class="fas fa-chevron-down arrow text-xs"></i>
                             </div>
-                            <div class="custom-select-options border-none">
-                                <div class="custom-select-option text-xs" data-value="">Semua Sekolah</div>
+                            <div class="custom-select-options">
+                                <div class="custom-select-option text-sm" data-value="">Semua Sekolah</div>
                                 @foreach ($list_sekolah as $sekolah)
-                                    <div class="custom-select-option text-xs" data-value="{{ $sekolah }}">{{ $sekolah }}</div>
+                                    <div class="custom-select-option text-sm" data-value="{{ $sekolah }}">{{ $sekolah }}</div>
                                 @endforeach
                             </div>
                         </div>
 
-                        {{-- 5. Reset Icon --}}
+                        {{-- 5. Reset Icon (Dibuat lebih proporsional) --}}
                         @if(request()->anyFilled(['search', 'status', 'asal_sekolah', 'start_date', 'end_date']))
                             <a href="{{ route('admin.pembayaran.index') }}"
-                                class="ml-auto p-2 text-gray-400 hover:text-rose-500 transition-colors" title="Reset Filter">
-                                <i class="fas fa-times-circle text-lg"></i>
+                                class="p-2.5 text-gray-400 hover:text-rose-500 transition-colors" title="Reset Filter">
+                                <i class="fas fa-times-circle text-xl"></i>
                             </a>
                         @endif
                     </form>
@@ -239,29 +237,29 @@
 
                                             @if($pembayaranPending)
                                                 <button @click="$dispatch('open-verifikasi', { 
-                                                                                                    id: '{{ $pembayaranPending->id }}',
-                                                                                                    nama: '{{ addslashes($d->pendaftaran->nama_siswa) }}',
-                                                                                                    total_tagihan: '{{ number_format($d->total_tagihan, 0, ',', '.') }}',
-                                                                                                    sisa_awal: '{{ number_format($d->sisa_tagihan + $pembayaranPending->nominal_bayar, 0, ',', '.') }}',
-                                                                                                    nominal_input: '{{ number_format($pembayaranPending->nominal_bayar, 0, ',', '.') }}',
-                                                                                                    sisa_akhir: '{{ number_format($d->sisa_tagihan, 0, ',', '.') }}',
-                                                                                                    bukti: '{{ route('admin.pembayaran.view-bukti', $pembayaranPending->id) }}',
-                                                                                                    tanggal: '{{ $pembayaranPending->created_at->format('d/m/Y H:i') }}'
-                                                                                                })"
+                                                                                                                id: '{{ $pembayaranPending->id }}',
+                                                                                                                nama: '{{ addslashes($d->pendaftaran->nama_siswa) }}',
+                                                                                                                total_tagihan: '{{ number_format($d->total_tagihan, 0, ',', '.') }}',
+                                                                                                                sisa_awal: '{{ number_format($d->sisa_tagihan + $pembayaranPending->nominal_bayar, 0, ',', '.') }}',
+                                                                                                                nominal_input: '{{ number_format($pembayaranPending->nominal_bayar, 0, ',', '.') }}',
+                                                                                                                sisa_akhir: '{{ number_format($d->sisa_tagihan, 0, ',', '.') }}',
+                                                                                                                bukti: '{{ route('admin.pembayaran.view-bukti', $pembayaranPending->id) }}',
+                                                                                                                tanggal: '{{ $pembayaranPending->created_at->format('d/m/Y H:i') }}'
+                                                                                                            })"
                                                     class="px-4 py-1.5 bg-amber-500 text-white rounded-lg text-xs font-bold hover:bg-amber-600 transition shadow-sm animate-pulse">
                                                     <i class="fas fa-clipboard-check mr-1"></i> Verifikasi
                                                 </button>
                                             @else
                                                                             <button
                                                                                 @click="openModal = true; selectedData = { 
-                                                                                                                                                                                                                                                nama: '{{ addslashes($d->pendaftaran->nama_siswa) }}',
-                                                                                                                                                                                                                                                nisn: '{{ $d->pendaftaran->nisn ?? '-' }}',
-                                                                                                                                                                                                                                                no_telp: '{{ $d->pendaftaran->no_telp ?? '-' }}',
-                                                                                                                                                                                                                                                total_cicilan: '{{ $d->pembayaran->count() }}x pembayaran', 
-                                                                                                                                                                                                                                                total: '{{ number_format($d->total_tagihan, 0, ',', '.') }}',
-                                                                                                                                                                                                                                                terbayar: '{{ number_format($d->total_tagihan - $d->sisa_tagihan, 0, ',', '.') }}',
-                                                                                                                                                                                                                                                sisa: '{{ number_format($d->sisa_tagihan, 0, ',', '.') }}',
-                                                                                                                                                                                                                                                riwayat: {{ $d->pembayaran->map(function ($item, $index) {
+                                                                                                                                                                                                                                                                                        nama: '{{ addslashes($d->pendaftaran->nama_siswa) }}',
+                                                                                                                                                                                                                                                                                        nisn: '{{ $d->pendaftaran->nisn ?? '-' }}',
+                                                                                                                                                                                                                                                                                        no_telp: '{{ $d->pendaftaran->no_telp ?? '-' }}',
+                                                                                                                                                                                                                                                                                        total_cicilan: '{{ $d->pembayaran->count() }}x pembayaran', 
+                                                                                                                                                                                                                                                                                        total: '{{ number_format($d->total_tagihan, 0, ',', '.') }}',
+                                                                                                                                                                                                                                                                                        terbayar: '{{ number_format($d->total_tagihan - $d->sisa_tagihan, 0, ',', '.') }}',
+                                                                                                                                                                                                                                                                                        sisa: '{{ number_format($d->sisa_tagihan, 0, ',', '.') }}',
+                                                                                                                                                                                                                                                                                        riwayat: {{ $d->pembayaran->map(function ($item, $index) {
                                                     return [
                                                         'nama' => 'Cicilan ' . ($index + 1),
                                                         'tanggal' => $item->created_at->format('d/m/Y'),
@@ -270,7 +268,7 @@
                                                         'bukti_url' => route('admin.pembayaran.view-bukti', $item->id)
                                                     ];
                                                 })->toJson() }}
-                                                                                                                                                                                                                                            }"
+                                                                                                                                                                                                                                                                                    }"
                                                                                 class="px-4 py-1.5 bg-indigo-50 text-indigo-600 border border-indigo-200 rounded-lg text-xs font-bold hover:bg-indigo-600 hover:text-white transition">
                                                                                 Lihat Detail
                                                                             </button>
@@ -331,10 +329,10 @@
                             <div class="text-right">
                                 <p class="font-bold">Rp. <span x-text="item.jumlah"></span></p>
                                 <span :class="{
-                                                        'bg-emerald-400': item.status === 'Dikonfirmasi',
-                                                        'bg-rose-400': item.status === 'Ditolak',
-                                                        'bg-amber-400': item.status === 'Menunggu'
-                                                    }"
+                                                            'bg-emerald-400': item.status === 'Dikonfirmasi',
+                                                            'bg-rose-400': item.status === 'Ditolak',
+                                                            'bg-amber-400': item.status === 'Menunggu'
+                                                        }"
                                     class="inline-block px-2 py-0.5 rounded-full text-[10px] text-white font-bold mt-1"
                                     x-text="item.status"></span>
                             </div>

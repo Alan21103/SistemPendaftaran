@@ -12,6 +12,7 @@ class Konten extends Model
     protected $table = 'konten';
 
     protected $fillable = [
+        'id_admin',
         'kategori_konten_id',
         'judul',
         'sub_judul',

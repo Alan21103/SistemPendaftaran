@@ -74,6 +74,7 @@ class AdminKontenController extends Controller
             'sub_judul' => $validated['sub_judul'] ?? null,
             'isi' => $validated['isi'],
             'urutan' => $urutan_baru,
+            'id_admin' => auth()->id(),
         ]);
 
         // SIMPAN MEDIA UTAMA (urutan 0)

@@ -31,7 +31,7 @@
                     <a href="{{ route('admin.export.pendaftaran') }}"
                         class="inline-flex items-center gap-2 bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 font-medium py-2 px-4 rounded-lg shadow-sm transition">
                         <img src="{{ asset('icons/export.svg') }}" alt="Export Excel Icon" class="h-5 w-5">
-                        Ekspor Excel
+                        Export Excel
                     </a>
                 </div>
 

@@ -106,10 +106,10 @@
                 </div>
 
                 <div class="px-4"> 
-                    {{-- 1. TENAGA PENGAJAR --}}
-                    @if($kat->nama === 'Tenaga Pengajar')
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            @foreach($kat->konten as $konten)
+                {{-- 1. TENAGA PENGAJAR --}}
+                @if($kat->nama === 'Tenaga Pengajar')
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        @foreach($kat->konten as $konten)
                             <div class="flex items-center gap-6 p-4 rounded-xl border border-gray-50 bg-gray-50/30">
                                 <div class="relative w-28 h-28 flex-shrink-0 group">
                                     @php $foto = $konten->media->where('urutan', 0)->first(); @endphp
@@ -136,26 +136,24 @@
                                     <h3 class="text-xl font-bold text-black">{{ $konten->judul }}</h3>
                                     <p class="text-gray-500 text-sm mb-4">{{ $konten->isi }}</p>
                                     <div class="flex gap-2">
-                                        <button onclick="openEditModal('{{ $konten->id }}', '{{ addslashes($konten->judul) }}', {{ json_encode($konten->isi) }}, '{{ $kat->nama }}', '')" class="bg-[#F9A825] hover:bg-orange-600 text-white px-5 py-1.5 rounded-md text-sm font-bold flex items-center gap-2 transition active:scale-95">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                        <button onclick="openEditModal('{{ $konten->id }}', '{{ addslashes($konten->judul) }}', {{ json_encode($konten->isi) }}, '{{ $kat->nama }}', '')" class="bg-[#F9A825] hover:bg-orange-600 text-white px-5 py-1.5 rounded-md text-sm font-bold flex items-center gap-2 transition">
                                             Edit
                                         </button>
                                         <form action="{{ route('admin.konten.destroy', $konten->id) }}" method="POST" onsubmit="return confirmDelete(event, 'Data Guru')">
                                             @csrf @method('DELETE')
-                                            <button type="submit" class="bg-[#FF3B30] hover:bg-red-700 text-white px-5 py-1.5 rounded-md text-sm font-bold flex items-center gap-2 transition active:scale-95">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                            <button type="submit" class="bg-[#FF3B30] hover:bg-red-700 text-white px-5 py-1.5 rounded-md text-sm font-bold flex items-center gap-2 transition">
                                                 Hapus
                                             </button>
                                         </form>
                                     </div>
                                 </div>
                             </div>
-                            @endforeach
-                        </div>
+                        @endforeach
+                    </div>
 
-                    {{-- 2. INFORMASI PPDB --}}
-                    @elseif($kat->nama === 'Informasi PPDB')
-                        @foreach($kat->konten as $konten)
+                {{-- 2. INFORMASI PPDB --}}
+                @elseif($kat->nama === 'Informasi PPDB')
+                    @foreach($kat->konten as $konten)
                         <div class="space-y-4">
                             <h3 class="text-2xl font-bold text-black">{{ $konten->judul }}</h3>
                             <div>
@@ -166,85 +164,104 @@
                             </div>
                             <div class="pt-4">
                                 <button onclick="openEditModal('{{ $konten->id }}', '{{ addslashes($konten->judul) }}', {{ json_encode($konten->isi) }}, '{{ $kat->nama }}', '')" 
-                                        class="bg-[#FFB300] hover:bg-orange-500 text-white px-6 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition active:scale-95 shadow-sm">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                        class="bg-[#FFB300] hover:bg-orange-500 text-white px-6 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition shadow-sm">
                                     Edit
                                 </button>
                             </div>
                         </div>
-                        @endforeach
+                    @endforeach
 
-                    {{-- 3. KATEGORI UMUM (EKSTRAKURIKULER, DLL) --}}
-                    @else
-                        <div class="space-y-10"> 
-                            @foreach($kat->konten as $konten)
-                                <div class="flex flex-col md:flex-row justify-between items-start gap-8 py-6 border-b last:border-0 group">
-                                    <div class="flex-1">
-                                        <h3 class="text-2xl font-bold text-black mb-1">{{ $konten->judul }}</h3>
-                                        <p class="text-gray-500 text-sm leading-relaxed text-justify @if($kat->nama !== 'Tentang Sekolah') mb-6 @endif whitespace-pre-line">
-                                            {{ $konten->isi }}
-                                        </p>
-                                        
-                                        @if($kat->nama !== 'Tentang Sekolah')
-                                        <div class="flex gap-3">
-                                            <button onclick="openEditModal('{{ $konten->id }}', '{{ addslashes($konten->judul) }}', {{ json_encode($konten->isi) }}, '{{ $kat->nama }}', '{{ $konten->media->where('urutan', 0)->first() ? asset('storage/' . $konten->media->where('urutan', 0)->first()->file_path) : '' }}')" 
-                                                    class="bg-[#F9A825] hover:bg-orange-600 text-white px-4 py-1.5 rounded-md text-sm font-bold flex items-center gap-2 transition active:scale-95">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                                                Edit
-                                            </button>
+                {{-- 3. KHUSUS BERANDA (STRUKTUR GAMBAR DI KANAN) --}}
+                @elseif($kat->nama === 'Beranda')
+                    <div class="space-y-10">
+                        @foreach($kat->konten as $konten)
+                            <div class="flex flex-col md:flex-row justify-between items-start gap-8 py-6 border-b last:border-0">
+                                <div class="flex-1">
+                                    <h3 class="text-2xl font-bold text-black mb-2">{{ $konten->judul }}</h3>
+                                    <p class="text-gray-600 text-base leading-relaxed mb-6 whitespace-pre-line text-justify">
+                                        {{ $konten->isi }}
+                                    </p>
+                                    <button onclick="openEditModal('{{ $konten->id }}', '{{ addslashes($konten->judul) }}', {{ json_encode($konten->isi) }}, '{{ $kat->nama }}', '{{ $konten->media->first() ? asset('storage/' . $konten->media->first()->file_path) : '' }}')" 
+                                            class="bg-[#F9A825] hover:bg-orange-600 text-white px-6 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition shadow-sm">
+                                        Edit
+                                    </button>
+                                </div>
 
-                                            @if($kat->nama !== 'Beranda')
-                                            <form action="{{ route('admin.konten.destroy', $konten->id) }}" method="POST" onsubmit="return confirmDelete(event, '{{ $kat->nama }}')">
+                                <div class="w-full md:w-80 flex-shrink-0">
+                                    @php $fotoBeranda = $konten->media->first(); @endphp
+                                    @if($fotoBeranda)
+                                        <div class="relative group">
+                                            <img src="{{ asset('storage/' . $fotoBeranda->file_path) }}" class="w-full h-auto rounded-xl shadow-md border border-gray-100 object-cover">
+                                            <form action="{{ route('admin.konten_media.destroy', $fotoBeranda->id) }}" method="POST" class="absolute -top-2 -right-2 hidden group-hover:block" onsubmit="return confirmDelete(event, 'Gambar Beranda')">
                                                 @csrf @method('DELETE')
-                                                <button type="submit" class="bg-[#FF3B30] hover:bg-red-700 text-white px-4 py-1.5 rounded-md text-sm font-bold flex items-center gap-2 transition active:scale-95">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                                    Hapus
-                                                </button>
+                                                <button type="submit" class="bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-lg">&times;</button>
                                             </form>
-                                            @endif
                                         </div>
-                                        @endif
-                                    </div>
-
-                                    @if($kat->nama === 'Tentang Sekolah')
-                                    <div class="flex-shrink-0 mt-1">
-                                        <button onclick="openEditModal('{{ $konten->id }}', '{{ addslashes($konten->judul) }}', {{ json_encode($konten->isi) }}, '{{ $kat->nama }}', '')" 
-                                                class="bg-[#F9A825] hover:bg-orange-600 text-white px-4 py-1.5 rounded-md text-sm font-bold flex items-center gap-2 transition active:scale-95">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                                            Edit
-                                        </button>
-                                    </div>
-                                    @endif
-
-                                    @if($kat->nama === 'Ekstrakurikuler')
-                                    {{-- BAGIAN INI YANG DIUBAH --}}
-                                    <div class="flex flex-wrap gap-4 mt-4 md:mt-0">
-                                        @foreach($konten->media as $m)
-                                            {{-- UBAH: w-20 h-20 menjadi w-24 h-32 (persegi panjang vertikal) --}}
-                                            <div class="w-24 h-32 relative group">
-                                                {{-- UBAH: w-20 h-20 menjadi w-full h-full agar mengikuti container --}}
-                                                <img src="{{ asset('storage/' . $m->file_path) }}" class="w-full h-full object-cover rounded-lg border shadow-sm">
-                                                <form action="{{ route('admin.konten_media.destroy', $m->id) }}" method="POST" class="absolute -top-2 -right-2 hidden group-hover:block" onsubmit="return confirmDelete(event, 'Gambar')">
-                                                    @csrf @method('DELETE')
-                                                    {{-- UBAH: Hapus p-1, tambah w-6 h-6 flex center agar bulat sempurna --}}
-                                                    <button type="submit" class="bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md text-sm leading-none">&times;</button>
-                                                </form>
-                                            </div>
-                                        @endforeach
-                                        <form action="{{ route('admin.konten_media.store') }}" method="POST" enctype="multipart/form-data" id="quick-upload-{{ $konten->id }}">
+                                    @else
+                                        <form action="{{ route('admin.konten_media.store') }}" method="POST" enctype="multipart/form-data" id="upload-beranda-{{ $konten->id }}">
                                             @csrf
                                             <input type="hidden" name="konten_id" value="{{ $konten->id }}">
-                                            <input type="file" name="file_path" id="input-quick-{{ $konten->id }}" class="hidden" onchange="document.getElementById('quick-upload-{{ $konten->id }}').submit()">
-                                            {{-- UBAH: w-20 h-20 menjadi w-24 h-32 (persegi panjang vertikal) --}}
-                                            <div onclick="document.getElementById('input-quick-{{ $konten->id }}').click()" class="w-24 h-32 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition text-gray-400 text-3xl">+</div>
+                                            <input type="file" name="file_path" class="hidden" id="input-beranda-{{ $konten->id }}" onchange="this.form.submit()">
+                                            <div onclick="document.getElementById('input-beranda-{{ $konten->id }}').click()" class="w-full h-44 bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center cursor-pointer hover:border-blue-400 transition">
+                                                <span class="text-3xl text-gray-300">+</span>
+                                            </div>
                                         </form>
-                                    </div>
                                     @endif
                                 </div>
-                            @endforeach
-                        </div>
-                    @endif
-                </div>
+                            </div>
+                        @endforeach
+                    </div>
+
+                {{-- 4. KATEGORI UMUM LAINNYA (EKSTRAKURIKULER, TENTANG SEKOLAH, DLL) --}}
+                @else
+                    <div class="space-y-10"> 
+                        @foreach($kat->konten as $konten)
+                            <div class="flex flex-col md:flex-row justify-between items-start gap-8 py-6 border-b last:border-0">
+                                <div class="flex-1">
+                                    <h3 class="text-2xl font-bold text-black mb-1">{{ $konten->judul }}</h3>
+                                    <p class="text-gray-500 text-sm leading-relaxed text-justify mb-6 whitespace-pre-line">
+                                        {{ $konten->isi }}
+                                    </p>
+                                    
+                                    <div class="flex gap-3">
+                                        <button onclick="openEditModal('{{ $konten->id }}', '{{ addslashes($konten->judul) }}', {{ json_encode($konten->isi) }}, '{{ $kat->nama }}', '')" class="bg-[#F9A825] hover:bg-orange-600 text-white px-4 py-1.5 rounded-md text-sm font-bold flex items-center gap-2 transition">
+                                            Edit
+                                        </button>
+                                        @if($kat->nama !== 'Tentang Sekolah')
+                                        <form action="{{ route('admin.konten.destroy', $konten->id) }}" method="POST" onsubmit="return confirmDelete(event, '{{ $kat->nama }}')">
+                                            @csrf @method('DELETE')
+                                            <button type="submit" class="bg-[#FF3B30] hover:bg-red-700 text-white px-4 py-1.5 rounded-md text-sm font-bold flex items-center gap-2 transition">
+                                                Hapus
+                                            </button>
+                                        </form>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                @if($kat->nama === 'Ekstrakurikuler')
+                                <div class="flex flex-wrap gap-4 mt-4 md:mt-0">
+                                    @foreach($konten->media as $m)
+                                        <div class="w-24 h-32 relative group">
+                                            <img src="{{ asset('storage/' . $m->file_path) }}" class="w-full h-full object-cover rounded-lg border shadow-sm">
+                                            <form action="{{ route('admin.konten_media.destroy', $m->id) }}" method="POST" class="absolute -top-2 -right-2 hidden group-hover:block" onsubmit="return confirmDelete(event, 'Gambar')">
+                                                @csrf @method('DELETE')
+                                                <button type="submit" class="bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md">&times;</button>
+                                            </form>
+                                        </div>
+                                    @endforeach
+                                    <form action="{{ route('admin.konten_media.store') }}" method="POST" enctype="multipart/form-data" id="quick-upload-{{ $konten->id }}">
+                                        @csrf
+                                        <input type="hidden" name="konten_id" value="{{ $konten->id }}">
+                                        <input type="file" name="file_path" id="input-quick-{{ $konten->id }}" class="hidden" onchange="document.getElementById('quick-upload-{{ $konten->id }}').submit()">
+                                        <div onclick="document.getElementById('input-quick-{{ $konten->id }}').click()" class="w-24 h-32 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-400 transition text-gray-400 text-3xl">+</div>
+                                    </form>
+                                </div>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
             </div>
             @endforeach
         </main>
