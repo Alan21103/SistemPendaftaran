@@ -14,7 +14,6 @@
     <style>
         [x-cloak] { display: none !important; }
 
-        /* Responsive Table to Cards */
         @media (max-width: 768px) {
             thead { display: none; }
             table, tbody, tr, td { display: block; width: 100%; }
@@ -46,7 +45,6 @@
             td.text-center { justify-content: center; border-top: 1px dashed #eee !important; padding-top: 1rem !important; }
         }
 
-        /* Custom Dropdown Styling */
         .custom-select-container { position: relative; min-width: 160px; cursor: pointer; }
         .custom-select-trigger {
             display: flex; align-items: center; justify-content: space-between;
@@ -64,10 +62,7 @@
         .custom-select-container.active .custom-select-options { display: block; }
         
         .custom-select-option { padding: 0.6rem 1rem; font-size: 0.875rem; transition: all 0.2s; }
-        .custom-select-option:hover { 
-            background-color: #3b82f6; 
-            color: white; 
-        }
+        .custom-select-option:hover { background-color: #3b82f6; color: white; }
 
         .arrow { transition: transform 0.2s; font-size: 0.75rem; color: #9ca3af; }
         .custom-select-container.active .arrow { transform: rotate(180deg); }
@@ -334,7 +329,6 @@
         <div x-show="openModal" x-cloak class="fixed inset-0 z-[100] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
             <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
                 <div x-show="openModal" x-transition.opacity class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" @click="openModal = false"></div>
-
                 <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
                 <div x-show="openModal" x-transition.scale.95 
@@ -353,7 +347,7 @@
                         </div>
                         <div>
                             <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Total Cicilan</p>
-                            <p class="text-xs font-bold text-gray-800" x-text="selectedData.riwayat.length + 'x' + 'pembayaran'"></p>
+                            <p class="text-xs font-bold text-gray-800" x-text="selectedData.riwayat.length + 'x pembayaran'"></p>
                         </div>
                     </div>
 
@@ -366,11 +360,17 @@
                             </div>
                             <div class="flex justify-between items-center text-xs">
                                 <span class="font-medium text-gray-600">Sudah Dibayar</span>
-                                <span class="font-bold text-emerald-500" x-text="'Rp ' + selectedData.sudah_bayar"></span>
+                                {{-- Warna: Hitam jika 0, Hijau jika ada nominal --}}
+                                <span class="font-bold" 
+                                      :class="selectedData.sudah_bayar === '0' ? 'text-gray-900' : 'text-emerald-500'"
+                                      x-text="'Rp ' + selectedData.sudah_bayar"></span>
                             </div>
                             <div class="pt-2 border-t border-gray-100 flex justify-between items-center">
                                 <span class="text-xs font-black text-gray-900">Sisa Tagihan</span>
-                                <span class="text-xs font-black text-rose-500" x-text="'Rp ' + selectedData.sisa"></span>
+                                {{-- Warna: Abu-abu jika 0, Merah jika ada nominal --}}
+                                <span class="text-xs font-black" 
+                                      :class="selectedData.sisa === '0' ? 'text-gray-400' : 'text-rose-500'"
+                                      x-text="'Rp ' + selectedData.sisa"></span>
                             </div>
                         </div>
                     </div>
