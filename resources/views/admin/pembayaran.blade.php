@@ -14,7 +14,6 @@
     <style>
         [x-cloak] { display: none !important; }
 
-        /* Responsive Table to Cards */
         @media (max-width: 768px) {
             thead { display: none; }
             table, tbody, tr, td { display: block; width: 100%; }
@@ -46,7 +45,6 @@
             td.text-center { justify-content: center; border-top: 1px dashed #eee !important; padding-top: 1rem !important; }
         }
 
-        /* Custom Dropdown Styling */
         .custom-select-container { position: relative; min-width: 160px; cursor: pointer; }
         .custom-select-trigger {
             display: flex; align-items: center; justify-content: space-between;
@@ -64,12 +62,7 @@
         .custom-select-container.active .custom-select-options { display: block; }
         
         .custom-select-option { padding: 0.6rem 1rem; font-size: 0.875rem; transition: all 0.2s; }
-
-        /* Hover Biru pada Filter */
-        .custom-select-option:hover { 
-            background-color: #3b82f6; 
-            color: white; 
-        }
+        .custom-select-option:hover { background-color: #3b82f6; color: white; }
 
         .arrow { transition: transform 0.2s; font-size: 0.75rem; color: #9ca3af; }
         .custom-select-container.active .arrow { transform: rotate(180deg); }
@@ -182,7 +175,6 @@
                                         <td class="px-6 py-4 font-semibold">Rp {{ number_format($d->total_tagihan, 0, ',', '.') }}</td>
                                         <td class="px-6 py-4 font-bold {{ $d->sisa_tagihan > 0 ? 'text-rose-600' : 'text-gray-400' }}">Rp {{ number_format($d->sisa_tagihan, 0, ',', '.') }}</td>
                                         <td class="px-6 py-4">
-                                            {{-- Status Hijau untuk Lunas --}}
                                             <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase border 
                                                 {{ strtolower($d->status_pembayaran) == 'lunas' 
                                                     ? 'bg-emerald-50 text-emerald-600 border-emerald-200' 
@@ -193,7 +185,7 @@
                                         <td class="px-6 py-4 text-center">
                                             @php 
                                                 $pembayaranPending = $d->pembayaran->where('status_konfirmasi', 'Menunggu Verifikasi')->first(); 
-                                                $totalTerbayar = $d->pembayaran->where('status_konfirmasi', 'Diterima')->sum('nominal_bayar');
+                                                $totalTerbayar = $d->pembayaran->whereIn('status_konfirmasi', ['Diterima', 'Dikonfirmasi'])->sum('nominal_bayar');
                                             @endphp
 
                                             @if($pembayaranPending)
@@ -220,7 +212,7 @@
                                                             'id' => $p->id,
                                                             'nominal' => number_format($p->nominal_bayar, 0, ',', '.'),
                                                             'tanggal' => $p->created_at->format('d/m/Y'),
-                                                            'status' => $p->status_konfirmasi, // Backend: 'Diterima'
+                                                            'status' => $p->status_konfirmasi, 
                                                             'bukti_url' => route('admin.pembayaran.view-bukti', $p->id)
                                                         ];
                                                     })) }}
@@ -242,12 +234,11 @@
         </main>
 
         {{-- ========================================= --}}
-        {{-- MODAL DETAIL PEMBAYARAN (UKURAN RAMPING)  --}}
+        {{-- MODAL DETAIL PEMBAYARAN                  --}}
         {{-- ========================================= --}}
         <div x-show="openModal" x-cloak class="fixed inset-0 z-[100] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
             <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
                 <div x-show="openModal" x-transition.opacity class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" @click="openModal = false"></div>
-
                 <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
                 <div x-show="openModal" x-transition.scale.95 
@@ -255,7 +246,6 @@
                     
                     <h3 class="mb-6 text-xl font-black text-center text-gray-900" id="modal-title">Detail Pembayaran</h3>
 
-                    {{-- Data Siswa & Total Cicilan (Sinkron dengan Riwayat) --}}
                     <div class="grid grid-cols-3 gap-4 p-4 mb-6 bg-gray-50/50 border border-gray-100 rounded-2xl">
                         <div>
                             <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Nama Siswa</p>
@@ -267,12 +257,10 @@
                         </div>
                         <div>
                             <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Total Cicilan</p>
-                            {{-- SINKRON: Menghitung jumlah item dalam riwayat cicilan --}}
-                            <p class="text-xs font-bold text-gray-800" x-text="selectedData.riwayat.length + 'x'"></p>
+                            <p class="text-xs font-bold text-gray-800" x-text="selectedData.riwayat.length + 'x pembayaran'"></p>
                         </div>
                     </div>
 
-                    {{-- Ringkasan Tagihan --}}
                     <div class="mb-6 border-2 border-gray-800 rounded-xl overflow-hidden">
                         <div class="bg-white p-4 space-y-2">
                             <p class="text-xs font-black text-gray-900 mb-2">Ringkasan Tagihan</p>
@@ -282,11 +270,17 @@
                             </div>
                             <div class="flex justify-between items-center text-xs">
                                 <span class="font-medium text-gray-600">Sudah Dibayar</span>
-                                <span class="font-bold text-emerald-500" x-text="'Rp ' + selectedData.sudah_bayar"></span>
+                                {{-- Warna: Hitam jika 0, Hijau jika ada nominal --}}
+                                <span class="font-bold" 
+                                      :class="selectedData.sudah_bayar === '0' ? 'text-gray-900' : 'text-emerald-500'"
+                                      x-text="'Rp ' + selectedData.sudah_bayar"></span>
                             </div>
                             <div class="pt-2 border-t border-gray-100 flex justify-between items-center">
                                 <span class="text-xs font-black text-gray-900">Sisa Tagihan</span>
-                                <span class="text-xs font-black text-rose-500" x-text="'Rp ' + selectedData.sisa"></span>
+                                {{-- Warna: Abu-abu jika 0, Merah jika ada nominal --}}
+                                <span class="text-xs font-black" 
+                                      :class="selectedData.sisa === '0' ? 'text-gray-400' : 'text-rose-500'"
+                                      x-text="'Rp ' + selectedData.sisa"></span>
                             </div>
                         </div>
                     </div>
@@ -304,15 +298,19 @@
                                     </div>
                                     <div class="text-right">
                                         <p class="text-xs font-black text-gray-900 mb-1" x-text="'Rp ' + item.nominal"></p>
-                                        {{-- STATUS: DIKONFIRMASI DIGANTI MENJADI ✓ DITERIMA SESUAI GAMBAR --}}
-                                        <span class="px-2 py-0.5 text-[8px] font-black uppercase rounded-full inline-flex items-center gap-1"
+                                        
+                                        <span class="px-2.5 py-1 text-[9px] font-black uppercase rounded-lg inline-flex items-center gap-1 shadow-sm border"
                                             :class="{
-                                                'bg-emerald-100 text-emerald-600': item.status === 'Diterima',
-                                                'bg-amber-100 text-amber-600': item.status === 'Menunggu Verifikasi',
-                                                'bg-rose-100 text-rose-600': item.status === 'Ditolak'
+                                                'bg-emerald-500 text-white border-emerald-600': item.status === 'Diterima' || item.status === 'Dikonfirmasi',
+                                                'bg-amber-100 text-amber-600 border-amber-200': item.status === 'Menunggu Verifikasi',
+                                                'bg-rose-100 text-rose-600 border-rose-200': item.status === 'Ditolak'
                                             }">
-                                            <span x-show="item.status === 'Diterima'">✓</span>
-                                            <span x-text="item.status"></span>
+                                            
+                                            <template x-if="item.status === 'Diterima' || item.status === 'Dikonfirmasi'">
+                                                <i class="fas fa-check-circle text-[10px]"></i>
+                                            </template>
+
+                                            <span x-text="item.status === 'Dikonfirmasi' || item.status === 'Diterima' ? 'Diterima' : item.status"></span>
                                         </span>
                                     </div>
                                 </div>
