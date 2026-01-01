@@ -86,20 +86,48 @@
                         {{-- Tombol Aksi --}}
                         <div class="mt-10 pt-8 border-t border-gray-100 flex flex-wrap gap-4 justify-center md:justify-start">
                             @if(($pendaftaran->status ?? 'Pending') == 'Diterima')
+                                {{-- Tombol Unduh Bukti Daftar --}}
                                 <a href="{{ route('pendaftaran.pdf', $pendaftaran->id_pendaftaran) }}"
                                     class="inline-flex items-center px-8 py-3 bg-[#002060] rounded-full font-bold text-xs text-white uppercase tracking-widest hover:bg-blue-900 transition shadow-md active:scale-95">
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
                                     </svg>
-                                    Unduh Bukti
+                                    Unduh Bukti Daftar
                                 </a>
-                                <a href="{{ route('pembayaran.index', $pendaftaran->id_pendaftaran) }}"
-                                    class="inline-flex items-center px-8 py-3 bg-green-600 rounded-full font-bold text-xs text-white uppercase tracking-widest hover:bg-green-700 transition shadow-md active:scale-95">
-                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"></path>
-                                    </svg>
-                                    Lanjutkan Pembayaran
-                                </a>
+
+                                @php
+                                    // Ambil ID Tagihan
+                                    $tagihanId = $pendaftaran->tagihan->id ?? null;
+                                    
+                                    // Cari pembayaran yang punya foto_kwitansi berdasarkan tagihan_id tersebut
+                                    $pembayaranLunas = null;
+                                    if ($tagihanId) {
+                                        $pembayaranLunas = \App\Models\Pembayaran::where('tagihan_id', $tagihanId)
+                                            ->whereNotNull('foto_kwitansi')
+                                            ->where('foto_kwitansi', '!=', '')
+                                            ->first();
+                                    }
+                                @endphp
+
+                                @if($pembayaranLunas)
+                                    {{-- Tombol Unduh Kwitansi Lunas --}}
+                                    <a href="{{ asset('storage/' . $pembayaranLunas->foto_kwitansi) }}" target="_blank"
+                                        class="inline-flex items-center px-8 py-3 bg-emerald-600 rounded-full font-bold text-xs text-white uppercase tracking-widest hover:bg-emerald-700 transition shadow-md active:scale-95">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                        </svg>
+                                        Unduh Kwitansi Lunas
+                                    </a>
+                                @else
+                                    {{-- Tombol Lanjutkan Pembayaran --}}
+                                    <a href="{{ route('pembayaran.index', $pendaftaran->id_pendaftaran) }}"
+                                        class="inline-flex items-center px-8 py-3 bg-green-600 rounded-full font-bold text-xs text-white uppercase tracking-widest hover:bg-green-700 transition shadow-md active:scale-95">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"></path>
+                                        </svg>
+                                        Lanjutkan Pembayaran
+                                    </a>
+                                @endif
                             @endif
                         </div>
                     </div>

@@ -100,7 +100,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     // 1. KELOMPOK AKSES: ADMIN & TATA TUHA
     // Masukkan rute yang boleh dibuka oleh keduanya di sini
     Route::middleware('auth:admin,tata_usaha')->group(function () {
-        
+
         // Dashboard
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
@@ -110,7 +110,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/konten/create', [AdminKontenController::class, 'store'])->name('konten.store');
         Route::put('/konten/{id}', [AdminKontenController::class, 'update'])->name('konten.update');
         Route::delete('/konten/{id}', [AdminKontenController::class, 'destroy'])->name('konten.destroy');
-        
+
         // Media Konten
         Route::post('/konten_media', [AdminKontenController::class, 'storeMedia'])->name('konten_media.store');
         Route::delete('/konten_media/{id}', [AdminKontenController::class, 'destroyMedia'])->name('konten_media.destroy');
@@ -138,6 +138,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/pembayaran/reject/{id}', [AdminPembayaranController::class, 'reject'])->name('pembayaran.reject');
         Route::get('/pembayaran/bukti/{pembayaran}', [AdminPembayaranController::class, 'viewBukti'])->name('pembayaran.view-bukti');
         Route::get('/pembayaran/export', [AdminExportController::class, 'exportPembayaran'])->name('export.pembayaran');
+        Route::post('/pembayaran/update-kwitansi/{id}', [AdminPembayaranController::class, 'updateKwitansi'])
+            ->name('pembayaran.update-kwitansi');
     });
 });
 

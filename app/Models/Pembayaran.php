@@ -17,6 +17,7 @@ class Pembayaran extends Model
         'tanggal_bayar',
         'keterangan_cicilan',
         'bukti_transfer',
+        'foto_kwitansi',
         'status_konfirmasi',
     ];
 

@@ -1,49 +1,53 @@
 {{-- Navigation Bar --}}
-<header class="w-full bg-white sticky top-0 z-50 px-6 lg:px-16 py-4 flex justify-between items-center transition-all duration-300 shadow-sm">
+{{-- Tambahkan x-data untuk kontrol menu mobile --}}
+<header x-data="{ mobileMenuOpen: false }" class="w-full bg-white sticky top-0 z-[100] px-6 lg:px-16 py-4 flex justify-between items-center shadow-sm transition-all duration-300">
 
     {{-- 1. Logo --}}
-    <div class="flex-shrink-0">
+    <div class="flex-shrink-0 relative z-[110]">
         <a href="{{ url('/') }}" class="flex items-center">
             <img src="{{ asset('storage/logosd.png') }}" alt="Logo SD" class="h-10 lg:h-12 w-auto transition-transform duration-300">
         </a>
     </div>
 
-    {{-- 2. Menu Links (Centered) --}}
-    <nav id="navbar-menu" class="hidden md:flex items-center space-x-8 lg:space-x-10">
-        <a href="{{ url('/') }}#beranda" class="nav-link text-[#002060] font-medium text-sm lg:text-base transition-all duration-300 hover:text-blue-800">Beranda</a>
-        <a href="{{ url('/') }}#ekstrakurikuler" class="nav-link text-[#002060] font-medium text-sm lg:text-base transition-all duration-300 hover:text-blue-800">Ekstrakurikuler</a>
-        <a href="{{ url('/') }}#tenaga-pengajar" class="nav-link text-[#002060] font-medium text-sm lg:text-base transition-all duration-300 hover:text-blue-800">Tenaga Pengajar</a>
-        
-        {{-- LOGIKA DINAMIS PENDAFTARAN --}}
-        @auth
-            @if(auth()->user()->pendaftaran)
-                <a href="{{ route('pendaftaran.index') }}" class="nav-link text-[#002060] font-medium text-sm lg:text-base transition-all duration-300 hover:text-blue-800">Status Pendaftaran</a>
-            @else
-                <a href="{{ route('pendaftaran.create') }}" class="nav-link text-[#002060] font-medium text-sm lg:text-base transition-all duration-300 hover:text-blue-800">Formulir Daftar</a>
-            @endif
-        @else
-            <a href="{{ url('/') }}#ppdb" class="nav-link text-[#002060] font-medium text-sm lg:text-base transition-all duration-300 hover:text-blue-800">Pendaftaran</a>
-        @endauth
+    {{-- 2. Menu Links (Desktop) --}}
+    <nav class="hidden md:flex items-center space-x-8 lg:space-x-10">
+        @include('partials.nav-links') {{-- Pisahkan link agar tidak nulis 2x --}}
     </nav>
 
-    {{-- 3. Auth Buttons --}}
-    <div class="flex items-center space-x-3 flex-shrink-0">
-        @if (Route::has('login'))
-            @auth
-                <a href="#" id="logoutButton" class="px-7 py-2 text-xs lg:text-sm font-bold text-white bg-[#002060] rounded-full hover:bg-blue-950 transition-all active:scale-95 shadow-sm">
-                    Logout
-                </a>
-            @else
-                @if (Route::has('register'))
-                    <a href="{{ route('register') }}" class="px-7 py-2 text-xs lg:text-sm font-bold text-white bg-[#002060] rounded-full hover:bg-blue-950 transition-all shadow-sm active:scale-95">
-                        Sign Up
-                    </a>
-                @endif
-                <a href="{{ route('login') }}" class="px-7 py-2 text-xs lg:text-sm font-bold text-white bg-[#002060] rounded-full hover:bg-blue-950 transition-all shadow-sm active:scale-95">
-                    Sign In
-                </a>
-            @endauth
-        @endif
+    {{-- 3. Auth Buttons (Desktop) --}}
+    <div class="hidden md:flex items-center space-x-3 flex-shrink-0">
+        @include('partials.auth-buttons')
+    </div>
+
+    {{-- 4. Mobile Toggle Button (Hanya Muncul di Mobile) --}}
+    <div class="flex md:hidden items-center z-[110]">
+        <button @click="mobileMenuOpen = !mobileMenuOpen" class="text-[#002060] focus:outline-none p-2" aria-label="Toggle Menu">
+            <template x-if="!mobileMenuOpen">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </template>
+            <template x-if="mobileMenuOpen">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </template>
+        </button>
+    </div>
+
+    {{-- 5. Mobile Menu Overlay --}}
+    <div 
+        x-show="mobileMenuOpen" 
+        x-cloak
+        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="opacity-0 -translate-y-5"
+        x-transition:enter-end="opacity-100 translate-y-0"
+        x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="opacity-100 translate-y-0"
+        x-transition:leave-end="opacity-0 -translate-y-5"
+        class="absolute top-full left-0 w-full bg-white border-b border-gray-100 shadow-xl py-6 px-8 flex flex-col space-y-5 md:hidden z-[100]"
+    >
+        @include('partials.nav-links')
+        <hr class="border-gray-100">
+        <div class="flex flex-col space-y-3">
+            @include('partials.auth-buttons')
+        </div>
     </div>
 
     @auth
@@ -51,67 +55,71 @@
     @endauth
 </header>
 
+{{-- Pisahkan Link Navigasi (Buat file baru: partials/nav-links.blade.php atau biarkan di sini) --}}
+{{-- Catatan: Jika tidak ingin dipisah, copy-paste link manual ke bagian desktop dan mobile --}}
+
 <style>
-    /* Class untuk link aktif (Bold & Timbul) */
-    .nav-link-active {
-        font-weight: 800 !important; 
-        color: #002060 !important; 
-        display: inline-block;
-    }
-    
-    .nav-link {
+    /* Gunakan prefix 'custom-' agar tidak bentrok dengan framework lain */
+    .custom-nav-link {
         display: inline-block;
         transition: all 0.3s ease;
+        position: relative;
     }
+
+    .custom-nav-link-active {
+        font-weight: 800 !important; 
+        color: #002060 !important; 
+    }
+
+    /* Efek underline tipis untuk link aktif di desktop */
+    @media (min-width: 768px) {
+        .custom-nav-link-active::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #002060;
+        }
+    }
+    
+    [x-cloak] { display: none !important; }
 </style>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const navLinks = document.querySelectorAll('.nav-link');
+        const navLinks = document.querySelectorAll('.nav-link, .custom-nav-link');
 
-        /**
-         * Fungsi untuk memperbarui status 'active' pada navbar
-         * Berdasarkan Hash (#) di URL atau Pathname
-         */
         function updateActiveNavbar() {
             const currentPath = window.location.pathname;
             const currentHash = window.location.hash;
 
             navLinks.forEach(link => {
                 const linkHref = link.getAttribute('href');
+                link.classList.remove('custom-nav-link-active');
                 
-                // Reset state ke default
-                link.classList.remove('nav-link-active');
-                link.classList.add('font-medium');
-
-                // 1. Logika untuk Hash (Anchor Link di halaman yang sama)
+                // Logika Hash
                 if (currentHash && linkHref.includes(currentHash)) {
-                    link.classList.add('nav-link-active');
-                    link.classList.remove('font-medium');
+                    link.classList.add('custom-nav-link-active');
                 }
-                // 2. Logika untuk Halaman Utama tanpa Hash (Default ke Beranda)
+                // Logika Home
                 else if (!currentHash && currentPath === '/' && linkHref.includes('#beranda')) {
-                    link.classList.add('nav-link-active');
-                    link.classList.remove('font-medium');
+                    link.classList.add('custom-nav-link-active');
                 }
-                // 3. Logika untuk Halaman Route (seperti /pendaftaran/create)
+                // Logika Route
                 else if (!currentHash && linkHref.includes(currentPath) && currentPath !== '/') {
-                    link.classList.add('nav-link-active');
-                    link.classList.remove('font-medium');
+                    link.classList.add('custom-nav-link-active');
                 }
             });
         }
 
-        // Jalankan saat halaman pertama kali dimuat
         updateActiveNavbar();
-
-        // Jalankan setiap kali ada perubahan Hash (misal: klik tombol Informasi PPDB)
         window.addEventListener('hashchange', updateActiveNavbar);
-
-        // Tambahan: Event click untuk navigasi instan
+        
+        // Tutup menu mobile saat link diklik
         navLinks.forEach(link => {
-            link.addEventListener('click', function() {
-                // Beri jeda sangat singkat agar hash terupdate di URL sebelum fungsi dipanggil
+            link.addEventListener('click', () => {
                 setTimeout(updateActiveNavbar, 10);
             });
         });

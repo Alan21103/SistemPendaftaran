@@ -206,4 +206,49 @@ class AdminPembayaranController extends Controller
         // Menggunakan response file agar browser menampilkan (preview) bukan download
         return response()->file($absolutePath);
     }
+
+    /**
+     * Fungsi untuk mengunggah atau memperbarui foto kwitansi dari Admin.
+     */
+    public function updateKwitansi(Request $request, $id)
+    {
+        // 1. Validasi Input
+        $request->validate([
+            'foto_kwitansi' => 'required|image|mimes:jpg,jpeg,png|max:2048', // Maksimal 2MB
+        ]);
+
+        try {
+            // 2. Cari data pembayaran (asumsi foto kwitansi disimpan di tabel Pembayaran)
+            $pembayaran = Pembayaran::findOrFail($id);
+
+            if ($request->hasFile('foto_kwitansi')) {
+                // 3. Hapus foto lama jika ada di storage
+                if ($pembayaran->foto_kwitansi && Storage::disk('public')->exists($pembayaran->foto_kwitansi)) {
+                    Storage::disk('public')->delete($pembayaran->foto_kwitansi);
+                }
+
+                // 4. Simpan foto baru ke folder 'foto_kwitansi' di disk public
+                $file = $request->file('foto_kwitansi');
+                $fileName = 'KW-' . time() . '-' . $pembayaran->id . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs('foto_kwitansi', $fileName, 'public');
+
+                // 5. Update path di database
+                $pembayaran->update([
+                    'foto_kwitansi' => $path
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Foto kwitansi berhasil diperbarui.',
+                'path' => asset('storage/' . $path)
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengunggah kwitansi: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
