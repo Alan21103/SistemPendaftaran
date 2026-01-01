@@ -1,0 +1,41 @@
+/* Sidebar Scoped CSS */
+#main-sidebar {
+    /* Mencegah interaksi dengan elemen di belakangnya saat mobile */
+    -webkit-overflow-scrolling: touch;
+    backface-visibility: hidden;
+}
+
+/* Mengunci scrollbar agar lebih cantik (khusus sidebar) */
+#main-sidebar::-webkit-scrollbar {
+    width: 5px;
+}
+
+#main-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#main-sidebar::-webkit-scrollbar-thumb {
+    background: #e2e8f0; /* warna gray-200 */
+    border-radius: 10px;
+}
+
+#main-sidebar::-webkit-scrollbar-thumb:hover {
+    background: #cbd5e1; /* warna gray-300 */
+}
+
+/* Memastikan SVG di dalam sidebar tidak terpengaruh CSS global */
+#main-sidebar svg {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* Reset sederhana khusus untuk nav di dalam sidebar jika ada CSS global yang merusak */
+#main-sidebar nav a {
+    text-decoration: none !important;
+    box-sizing: border-box;
+}
+
+/* Z-index safety: Pastikan sidebar selalu di atas konten tapi di bawah modal/dropdown global tertentu */
+#main-sidebar {
+    z-index: 9999;
+}

@@ -8,9 +8,7 @@
     @vite(['resources/css/style-hide-scrollbar.css'])
 
     <div class="flex min-h-screen bg-gray-50 font-sans">
-        <div class="h-screen sticky top-0 ">
-            <x-sidebar />
-        </div>
+        
 
         {{-- Class 'no-scrollbar' diterapkan di sini (pastikan ada di file CSS Anda) --}}
         <main class="w-full overflow-y-auto p-6 lg:p-6 no-scrollbar h-screen">
