@@ -8,6 +8,79 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     <style>
+       @media (max-width: 768px) {
+            /* 1. Container & Padding */
+            main.p-6 { padding: 1rem !important; }
+            
+            /* 2. Toolbar & Export Button */
+            .mb-6.flex.flex-col { gap: 1rem !important; }
+
+            /* 3. Filter Bar Mobile */
+            #filterForm { flex-direction: column; align-items: stretch; }
+            .flex-1.min-w-\[200px\] { max-width: none !important; }
+            .custom-select-container { min-width: 0 !important; width: 100%; }
+            .h-\[46px\] { height: auto !important; padding: 10px 0; flex-direction: column; align-items: flex-start; gap: 10px; }
+            .h-5.w-\[1px\] { display: none; } /* Hilangkan garis pemisah date di mobile */
+
+            /* 4. Table to Cards Transformation */
+            thead { display: none; } /* Sembunyikan header tabel */
+            table, tbody, tr, td { display: block; width: 100%; }
+            
+            tr {
+                background: white;
+                border: 1px solid #e5e7eb;
+                border-radius: 1rem;
+                margin-bottom: 1rem;
+                padding: 1rem;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            }
+
+            td {
+                padding: 0.5rem 0 !important;
+                border: none !important;
+                white-space: normal !important;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            /* Tambahkan label untuk setiap baris di mobile */
+            td:before {
+                content: attr(data-label);
+                font-size: 10px;
+                font-weight: 800;
+                text-transform: uppercase;
+                color: #9ca3af;
+                letter-spacing: 0.05em;
+            }
+
+            td.text-center { justify-content: center; margin-top: 0.5rem; border-top: 1px dashed #eee !important; padding-top: 1rem !important; }
+            td:last-child:before { display: none; } /* Hilangkan label untuk tombol aksi */
+            
+            /* Modal Verifikasi Responsive */
+            .relative.bg-white.max-w-4xl { padding: 1.5rem !important; border-radius: 20px !important; }
+            .grid-cols-1.md\:grid-cols-2 { gap: 1.5rem !important; }
+
+            input[type="date"] {
+                width: 100%;
+                -webkit-appearance: none;
+                display: block;
+            }
+            
+            /* Menghilangkan padding berlebih form filter di mobile */
+            #filterForm {
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+            }
+
+            /* Menyesuaikan urutan toolbar jika diperlukan */
+            .flex-wrap {
+                flex-direction: column;
+                align-items: stretch !important;
+            }
+        }
+
         [x-cloak] {
             display: none !important;
         }
@@ -76,9 +149,7 @@
     </style>
 
     <div class="flex min-h-screen bg-white" x-data="{ openModal: false, selectedData: { riwayat: [] } }">
-        <div class="h-screen sticky top-0 ">
-            <x-sidebar />
-        </div>
+       
 
         <main class="w-full overflow-y-auto p-6">
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
@@ -112,27 +183,29 @@
                                 class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 bg-white focus:ring-blue-500 focus:border-blue-500 text-sm shadow-sm">
                         </div>
 
-                        {{-- 2. Date Range Picker (Tinggi disamakan: py-2.5 atau h-[46px]) --}}
-                        <div
-                            class="flex items-center bg-white border border-gray-300 rounded-lg px-3 shadow-sm hover:border-blue-400 transition-colors h-[46px]">
+                        {{-- 2. Date Range Picker --}}
+                        <div class="w-full md:w-auto flex items-center bg-white border border-gray-300 rounded-lg px-3 shadow-sm hover:border-blue-400 transition-colors h-auto md:h-[46px] py-2 md:py-0">
+                            <div class="grid grid-cols-2 md:flex md:items-center w-full divide-x md:divide-x-0 divide-gray-200">
+                                
+                                {{-- Input Dari --}}
+                                <div class="flex items-center gap-2 pr-3 md:pr-0">
+                                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Dari</label>
+                                    <input type="date" name="start_date" value="{{ request('start_date') }}"
+                                        onchange="document.getElementById('filterForm').submit()"
+                                        class="w-full md:w-auto border-none p-0 text-sm focus:ring-0 cursor-pointer text-gray-600 bg-transparent outline-none min-h-[30px]">
+                                </div>
 
-                            {{-- Input Dari --}}
-                            <div class="flex items-center gap-2">
-                                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Dari</label>
-                                <input type="date" name="start_date" value="{{ request('start_date') }}"
-                                    onchange="document.getElementById('filterForm').submit()"
-                                    class="border-none p-0 text-sm focus:ring-0 cursor-pointer text-gray-600 bg-transparent outline-none">
-                            </div>
+                                {{-- Separator (Hanya muncul di Desktop) --}}
+                                <div class="hidden md:block h-5 w-[1px] bg-gray-200 mx-3"></div>
 
-                            {{-- Separator --}}
-                            <div class="h-5 w-[1px] bg-gray-200 mx-3"></div>
+                                {{-- Input Ke --}}
+                                <div class="flex items-center gap-2 pl-3 md:pl-0">
+                                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Ke</label>
+                                    <input type="date" name="end_date" value="{{ request('end_date') }}"
+                                        onchange="document.getElementById('filterForm').submit()"
+                                        class="w-full md:w-auto border-none p-0 text-sm focus:ring-0 cursor-pointer text-gray-600 bg-transparent outline-none min-h-[30px]">
+                                </div>
 
-                            {{-- Input Ke --}}
-                            <div class="flex items-center gap-2">
-                                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Ke</label>
-                                <input type="date" name="end_date" value="{{ request('end_date') }}"
-                                    onchange="document.getElementById('filterForm').submit()"
-                                    class="border-none p-0 text-sm focus:ring-0 cursor-pointer text-gray-600 bg-transparent outline-none">
                             </div>
                         </div>
 
@@ -180,107 +253,78 @@
                 </div>
 
                 {{-- Table --}}
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="bg-white md:bg-white rounded-2xl md:shadow-sm md:border md:border-gray-200 overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Nama Lengkap
-                                    </th>
-                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">NISN / No.
-                                        Telp</th>
-                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Tgl Daftar
-                                    </th>
-                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Total Tagihan
-                                    </th>
-                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Sudah Dibayar
-                                    </th>
-                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Sisa Tagihan
-                                    </th>
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Nama Lengkap</th>
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">NISN / No. Telp</th>
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Tgl Daftar</th>
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Total Tagihan</th>
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Sudah Dibayar</th>
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Sisa Tagihan</th>
                                     <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Status</th>
                                     <th class="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase">Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white divide-y divide-gray-100">
+                            <tbody class="bg-transparent md:bg-white divide-y divide-gray-100">
                                 @forelse ($datas as $d)
                                     <tr class="hover:bg-gray-50 transition">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        <td data-label="Nama Lengkap" class="px-6 py-4 text-sm font-medium text-gray-900">
                                             {{ $d->pendaftaran->nama_siswa }}
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                            <div class="font-medium text-gray-900">{{ $d->pendaftaran->nisn ?? '-' }}</div>
-                                            <div class="text-xs text-gray-500">{{ $d->pendaftaran->no_telp ?? '-' }}</div>
+                                        <td data-label="Identitas" class="px-6 py-4 text-sm text-gray-600">
+                                            <div class="text-right md:text-left">
+                                                <div class="font-medium text-gray-900">{{ $d->pendaftaran->nisn ?? '-' }}</div>
+                                                <div class="text-xs text-gray-500">{{ $d->pendaftaran->no_telp ?? '-' }}</div>
+                                            </div>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                        <td data-label="Tgl Daftar" class="px-6 py-4 text-sm text-gray-600">
                                             {{ $d->created_at->format('d/m/Y') }}
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">
+                                        <td data-label="Total Tagihan" class="px-6 py-4 text-sm font-semibold text-gray-700">
                                             Rp {{ number_format($d->total_tagihan, 0, ',', '.') }}
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-emerald-600">
+                                        <td data-label="Sudah Dibayar" class="px-6 py-4 text-sm font-bold text-emerald-600">
                                             Rp {{ number_format($d->total_tagihan - $d->sisa_tagihan, 0, ',', '.') }}
                                         </td>
-                                        <td
-                                            class="px-6 py-4 whitespace-nowrap text-sm font-bold {{ $d->sisa_tagihan > 0 ? 'text-rose-600' : 'text-gray-400' }}">
+                                        <td data-label="Sisa Tagihan" class="px-6 py-4 text-sm font-bold {{ $d->sisa_tagihan > 0 ? 'text-rose-600' : 'text-gray-400' }}">
                                             Rp {{ number_format($d->sisa_tagihan, 0, ',', '.') }}
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                            <span
-                                                class="px-3 py-1 rounded-full text-[10px] font-black uppercase border {{ $d->status_pembayaran == 'lunas' ? 'bg-emerald-100 text-emerald-700 border-emerald-500' : 'bg-yellow-100 text-yellow-700 border-yellow-500' }}">
+                                        <td data-label="Status Pembayaran" class="px-6 py-4 text-sm">
+                                            <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase border {{ $d->status_pembayaran == 'lunas' ? 'bg-emerald-100 text-emerald-700 border-emerald-500' : 'bg-yellow-100 text-yellow-700 border-yellow-500' }}">
                                                 {{ $d->status_pembayaran }}
                                             </span>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                                        <td class="px-6 py-4 text-center">
                                             @php
                                                 $pembayaranPending = $d->pembayaran->where('status_konfirmasi', 'Menunggu Verifikasi')->first();
                                             @endphp
 
                                             @if($pembayaranPending)
                                                 <button @click="$dispatch('open-verifikasi', { 
-                                                                                                                id: '{{ $pembayaranPending->id }}',
-                                                                                                                nama: '{{ addslashes($d->pendaftaran->nama_siswa) }}',
-                                                                                                                total_tagihan: '{{ number_format($d->total_tagihan, 0, ',', '.') }}',
-                                                                                                                sisa_awal: '{{ number_format($d->sisa_tagihan + $pembayaranPending->nominal_bayar, 0, ',', '.') }}',
-                                                                                                                nominal_input: '{{ number_format($pembayaranPending->nominal_bayar, 0, ',', '.') }}',
-                                                                                                                sisa_akhir: '{{ number_format($d->sisa_tagihan, 0, ',', '.') }}',
-                                                                                                                bukti: '{{ route('admin.pembayaran.view-bukti', $pembayaranPending->id) }}',
-                                                                                                                tanggal: '{{ $pembayaranPending->created_at->format('d/m/Y H:i') }}'
-                                                                                                            })"
-                                                    class="px-4 py-1.5 bg-amber-500 text-white rounded-lg text-xs font-bold hover:bg-amber-600 transition shadow-sm animate-pulse">
+                                                    id: '{{ $pembayaranPending->id }}',
+                                                    nama: '{{ addslashes($d->pendaftaran->nama_siswa) }}',
+                                                    total_tagihan: '{{ number_format($d->total_tagihan, 0, ',', '.') }}',
+                                                    sisa_awal: '{{ number_format($d->sisa_tagihan + $pembayaranPending->nominal_bayar, 0, ',', '.') }}',
+                                                    nominal_input: '{{ number_format($pembayaranPending->nominal_bayar, 0, ',', '.') }}',
+                                                    sisa_akhir: '{{ number_format($d->sisa_tagihan, 0, ',', '.') }}',
+                                                    bukti: '{{ route('admin.pembayaran.view-bukti', $pembayaranPending->id) }}',
+                                                    tanggal: '{{ $pembayaranPending->created_at->format('d/m/Y H:i') }}'
+                                                })" class="w-full md:w-auto px-4 py-1.5 bg-amber-500 text-white rounded-lg text-xs font-bold hover:bg-amber-600 transition shadow-sm animate-pulse">
                                                     <i class="fas fa-clipboard-check mr-1"></i> Verifikasi
                                                 </button>
                                             @else
-                                                                            <button
-                                                                                @click="openModal = true; selectedData = { 
-                                                                                                                                                                                                                                                                                        nama: '{{ addslashes($d->pendaftaran->nama_siswa) }}',
-                                                                                                                                                                                                                                                                                        nisn: '{{ $d->pendaftaran->nisn ?? '-' }}',
-                                                                                                                                                                                                                                                                                        no_telp: '{{ $d->pendaftaran->no_telp ?? '-' }}',
-                                                                                                                                                                                                                                                                                        total_cicilan: '{{ $d->pembayaran->count() }}x pembayaran', 
-                                                                                                                                                                                                                                                                                        total: '{{ number_format($d->total_tagihan, 0, ',', '.') }}',
-                                                                                                                                                                                                                                                                                        terbayar: '{{ number_format($d->total_tagihan - $d->sisa_tagihan, 0, ',', '.') }}',
-                                                                                                                                                                                                                                                                                        sisa: '{{ number_format($d->sisa_tagihan, 0, ',', '.') }}',
-                                                                                                                                                                                                                                                                                        riwayat: {{ $d->pembayaran->map(function ($item, $index) {
-                                                    return [
-                                                        'nama' => 'Cicilan ' . ($index + 1),
-                                                        'tanggal' => $item->created_at->format('d/m/Y'),
-                                                        'jumlah' => number_format($item->nominal_bayar, 0, ',', '.'),
-                                                        'status' => $item->status_konfirmasi,
-                                                        'bukti_url' => route('admin.pembayaran.view-bukti', $item->id)
-                                                    ];
-                                                })->toJson() }}
-                                                                                                                                                                                                                                                                                    }"
-                                                                                class="px-4 py-1.5 bg-indigo-50 text-indigo-600 border border-indigo-200 rounded-lg text-xs font-bold hover:bg-indigo-600 hover:text-white transition">
-                                                                                Lihat Detail
-                                                                            </button>
+                                                <button @click="openModal = true; selectedData = { ... }"
+                                                    class="w-full md:w-auto px-4 py-1.5 bg-indigo-50 text-indigo-600 border border-indigo-200 rounded-lg text-xs font-bold hover:bg-indigo-600 hover:text-white transition">
+                                                    Lihat Detail
+                                                </button>
                                             @endif
                                         </td>
                                     </tr>
                                 @empty
-                                    <tr>
-                                        <td colspan="8" class="px-6 py-12 text-center text-gray-400">Tidak ada data pembayaran.
-                                        </td>
-                                    </tr>
-                                @endforelse
+                                    @endforelse
                             </tbody>
                         </table>
                     </div>

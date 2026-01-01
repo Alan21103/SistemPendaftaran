@@ -9,6 +9,92 @@
     @vite(['resources/css/custom-dropdown.css', 'resources/css/animations.css'])
 
     <style>
+        /* --- RESPONSIVE MOBILE OPTIMIZATION (MAX 768px) --- */
+        @media (max-width: 768px) {
+            /* 1. Mengurangi padding utama agar konten lebih lebar */
+            main {
+                padding: 1rem !important;
+            }
+
+            /* 2. Header Halaman */
+            h1.text-3xl {
+                font-size: 1.5rem !important;
+            }
+
+            /* 3. Card Container */
+            .rounded-2xl.bg-white.p-8 {
+                padding: 1.25rem !important;
+                margin-bottom: 1.5rem !important;
+            }
+
+            /* 4. Header Card (Judul Halaman & Tombol Tambah) */
+            .flex.items-center.gap-4.mb-6 {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem !important;
+            }
+
+            .flex.items-center.gap-4.mb-6 h2 {
+                font-size: 1.1rem !important;
+                line-height: 1.4;
+            }
+
+            /* 5. Tenaga Pengajar (Foto & Nama) */
+            .grid-cols-1.md\:grid-cols-2.gap-8 {
+                gap: 1rem !important;
+            }
+
+            .flex.items-center.gap-6.p-4 {
+                flex-direction: column; /* Foto di atas, teks di bawah */
+                text-align: center;
+                gap: 1rem !important;
+            }
+
+            .w-28.h-28.flex-shrink-0 {
+                width: 100px !important;
+                height: 100px !important;
+                margin: 0 auto;
+            }
+
+            .flex.items-center.gap-6.p-4 .flex-1 .flex.gap-2 {
+                justify-content: center; /* Tombol edit/hapus guru ke tengah */
+            }
+
+            /* 6. Layout Beranda & Ekstrakurikuler (Teks & Gambar) */
+            .flex.flex-col.md\:flex-row.justify-between.gap-8 {
+                gap: 1.5rem !important;
+            }
+
+            .w-full.md\:w-80.flex-shrink-0 {
+                order: -1; /* Gambar muncul di atas teks pada mobile */
+                width: 100% !important;
+            }
+
+            /* 7. Modal (Agar tidak terlalu mepet layar) */
+            #modalTambahContent, #modalEditContent {
+                margin: 1rem;
+                padding: 1.5rem !important;
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+
+            /* 8. Penyesuaian teks konten */
+            .text-justify {
+                text-align: left !important; /* Justify di mobile seringkali membuat teks renggang aneh */
+            }
+
+            .text-base, .text-lg {
+                font-size: 0.95rem !important;
+            }
+
+            /* 9. Tombol Aksi Mobile */
+            .flex.gap-3 button, .flex.gap-3 a {
+                flex: 1; /* Tombol memenuhi lebar jika sejajar */
+                justify-content: center;
+                padding-left: 0.5rem !important;
+                padding-right: 0.5rem !important;
+            }
+        }
         /* Kustomisasi tombol SweetAlert agar persis seperti di gambar */
         .swal2-styled.swal2-confirm {
             background-color: #EF4444 !important; /* Merah */
@@ -40,10 +126,7 @@
 
    <div class="flex min-h-screen bg-gray-50">
         
-        {{-- SIDEBAR --}}
-        <div class="h-screen sticky top-0 ">
-            <x-sidebar /> 
-        </div>
+       
 
         {{-- KONTEN UTAMA --}}
         <main class="flex-1 w-full overflow-y-auto p-6 lg:p-6 animate-fade-in-up">

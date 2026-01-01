@@ -6,14 +6,25 @@
 
     {{-- LOAD ASSET CSS --}}
     @vite(['resources/css/custom-dropdown.css', 'resources/css/swal-modern.css'])
+    <style>
+    @media (max-width: 768px) {
+        .custom-select-container {
+            min-width: 150px !important;
+            width: auto !important;
+        }
 
+         /* 3. Filter Bar Mobile */
+            #filterForm { flex-direction: column; align-items: stretch; }
+            .flex-1.min-w-\[200px\] { max-width: none !important; }
+            .custom-select-container { min-width: 0 !important; width: 100%; }
+            .h-\[46px\] { height: auto !important; padding: 10px 0; flex-direction: column; align-items: flex-start; gap: 10px; }
+            .h-5.w-\[1px\] { display: none; } /* Hilangkan garis pemisah date di mobile */
+        
+    }
+    </style>
     <div class="flex min-h-screen bg-white">
 
-        <div class="h-screen sticky top-0 ">
-            <x-sidebar />
-        </div>
-
-        <main class="w-full overflow-y-auto p-6 md:p-6">
+        <main class="w-full overflow-y-auto p-4 md:p-6">
 
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
             <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -26,76 +37,83 @@
                 <x-pageheadersatu title="Kelola Pendaftaran" description="Kelola data pendaftar di sini!" />
 
                 {{-- Toolbar --}}
-                <div class="mb-6 flex flex-col gap-3 items-start">
+                <div class="mb-6 flex flex-row justify-between items-center gap-3">
                     <h2 class="text-xl font-semibold text-black">Daftar Pendaftar</h2>
                     <a href="{{ route('admin.export.pendaftaran') }}"
-                        class="inline-flex items-center gap-2 bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 font-medium py-2 px-4 rounded-lg shadow-sm transition">
-                        <img src="{{ asset('icons/export.svg') }}" alt="Export Excel Icon" class="h-5 w-5">
-                        Export Excel
+                        class="inline-flex items-center gap-2 bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 font-medium py-2 px-3 md:px-4 rounded-lg shadow-sm transition text-sm">
+                        <img src="{{ asset('icons/export.svg') }}" alt="Export" class="h-4 w-4 md:h-5 md:w-5">
+                        <span class="hidden sm:inline">Export Excel</span>
+                        <span class="sm:hidden">Export</span>
                     </a>
                 </div>
 
-                {{-- FILTER BAR (TETAP SEPERTI ASLI) --}}
+                {{-- FILTER BAR --}}
                 <div class="mb-6">
-                    <form id="filterForm" action="{{ route('admin.pendaftaran.index') }}" method="GET"
-                        class="flex flex-wrap items-center gap-3">
+                    <form id="filterForm" action="{{ route('admin.pendaftaran.index') }}" method="GET" 
+                        class="flex flex-col md:flex-row md:items-center gap-3">
 
-                        {{-- Search --}}
-                        <div class="flex-1 min-w-[200px] max-w-3xl relative">
-                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        {{-- Search - Full width di mobile, lebar maksimal di desktop --}}
+                        <div class="relative flex-1 md:max-w-xs lg:max-w-md">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
                             <input type="text" name="search" placeholder="Cari nama atau NISN..."
                                 value="{{ request('search') }}"
-                                class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 bg-white focus:ring-blue-500 focus:border-blue-500 text-sm shadow-sm">
+                                class="w-full pl-10 pr-4 py-2.5 rounded-xl md:rounded-lg border border-gray-300 bg-white focus:ring-blue-500 focus:border-blue-500 text-sm shadow-sm">
                         </div>
 
-                        {{-- CUSTOM DROPDOWN STATUS --}}
-                        <div class="custom-select-container" id="dropdownStatus">
-                            <input type="hidden" name="status" value="{{ request('status') }}">
-                            <div class="custom-select-trigger">
-                                <span>{{ request('status') ? ucfirst(request('status')) : 'Semua Status' }}</span>
-                                <i class="fas fa-chevron-down arrow"></i>
+                        {{-- Grouping Dropdown & Sort: Grid 2 kolom di mobile, Flex Row di desktop --}}
+                        <div class="grid grid-cols-2 md:flex md:flex-row gap-2 md:gap-3">
+                            
+                            {{-- Dropdown Status --}}
+                            <div class="custom-select-container !w-full md:!w-[160px]" id="dropdownStatus">
+                                <input type="hidden" name="status" value="{{ request('status') }}">
+                                <div class="custom-select-trigger !py-2.5 !rounded-xl md:!rounded-lg !text-xs md:!text-sm">
+                                    <span class="truncate">{{ request('status') ? ucfirst(request('status')) : 'Status' }}</span>
+                                    <i class="fas fa-chevron-down arrow"></i>
+                                </div>
+                                <div class="custom-select-options">
+                                    <div class="custom-select-option" data-value="">Semua Status</div>
+                                    @foreach ($list_status as $status)
+                                        <div class="custom-select-option" data-value="{{ $status }}">{{ ucfirst($status) }}</div>
+                                    @endforeach
+                                </div>
                             </div>
-                            <div class="custom-select-options">
-                                <div class="custom-select-option {{ request('status') == '' ? 'selected' : '' }}" data-value="">Semua Status</div>
-                                @foreach ($list_status as $status)
-                                    <div class="custom-select-option {{ request('status') == $status ? 'selected' : '' }}" data-value="{{ $status }}">{{ ucfirst($status) }}</div>
-                                @endforeach
+
+                            {{-- Dropdown Sekolah --}}
+                            <div class="custom-select-container !w-full md:!w-[180px]" id="dropdownSekolah">
+                                <input type="hidden" name="asal_sekolah" value="{{ request('asal_sekolah') }}">
+                                <div class="custom-select-trigger !py-2.5 !rounded-xl md:!rounded-lg !text-xs md:!text-sm">
+                                    <span class="truncate max-w-[80px] md:max-w-[120px]">{{ request('asal_sekolah') ? request('asal_sekolah') : 'Sekolah' }}</span>
+                                    <i class="fas fa-chevron-down arrow"></i>
+                                </div>
+                                <div class="custom-select-options">
+                                    <div class="custom-select-option" data-value="">Semua Sekolah</div>
+                                    @foreach ($list_sekolah as $sekolah)
+                                        <div class="custom-select-option" data-value="{{ $sekolah }}">{{ $sekolah }}</div>
+                                    @endforeach
+                                </div>
                             </div>
+
+                            {{-- Sort Nama --}}
+                            <button type="button" id="toggleSortNama" 
+                                class="py-2.5 px-3 rounded-xl md:rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-xs md:text-sm font-medium flex items-center justify-between md:justify-center md:gap-2 transition shadow-sm">
+                                <span>Nama</span>
+                                <span class="text-gray-500">@if(request('sort_by') === 'nama_desc') ▼ @elseif(request('sort_by') === 'nama_asc') ▲ @else ↕ @endif</span>
+                            </button>
+
+                            {{-- Sort Tanggal --}}
+                            <button type="button" id="toggleSortTanggal" 
+                                class="py-2.5 px-3 rounded-xl md:rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-xs md:text-sm font-medium flex items-center justify-between md:justify-center md:gap-2 transition shadow-sm">
+                                <span>Tanggal</span>
+                                <span class="text-gray-500">@if(request('sort_by') === 'tanggal_asc') ▲ @else ▼ @endif</span>
+                            </button>
                         </div>
-
-                        {{-- CUSTOM DROPDOWN ASAL SEKOLAH --}}
-                        <div class="custom-select-container" id="dropdownSekolah">
-                            <input type="hidden" name="asal_sekolah" value="{{ request('asal_sekolah') }}">
-                            <div class="custom-select-trigger">
-                                <span class="truncate max-w-[150px]">{{ request('asal_sekolah') ? request('asal_sekolah') : 'Semua Sekolah' }}</span>
-                                <i class="fas fa-chevron-down arrow"></i>
-                            </div>
-                            <div class="custom-select-options">
-                                <div class="custom-select-option {{ request('asal_sekolah') == '' ? 'selected' : '' }}" data-value="">Semua Sekolah</div>
-                                @foreach ($list_sekolah as $sekolah)
-                                    <div class="custom-select-option {{ request('asal_sekolah') == $sekolah ? 'selected' : '' }}" data-value="{{ $sekolah }}">{{ $sekolah }}</div>
-                                @endforeach
-                            </div>
-                        </div>
-
-                        {{-- Tombol Sort Nama --}}
-                        <button type="button" id="toggleSortNama" class="py-2.5 px-4 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-sm flex items-center gap-2 transition shadow-sm">
-                            <span>Nama</span>
-                            <span class="text-xs text-gray-500">@if(request('sort_by') === 'nama_desc') ▼ @elseif(request('sort_by') === 'nama_asc') ▲ @else ↕ @endif</span>
-                        </button>
-
-                        {{-- Tombol Sort Tanggal --}}
-                        <button type="button" id="toggleSortTanggal" class="py-2.5 px-4 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-sm flex items-center gap-2 transition shadow-sm">
-                            <span>Tanggal</span>
-                            <span class="text-xs text-gray-500">@if(request('sort_by') === 'tanggal_asc') ▲ @else ▼ @endif</span>
-                        </button>
 
                         <input type="hidden" name="sort_by" id="hiddenSortBy" value="{{ request('sort_by') }}">
                     </form>
                 </div>
 
-                {{-- Table (Tetap Seperti Asli) --}}
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                {{-- VIEW TABLE (DESKTOP ONLY) --}}
+                <div class="hidden md:block bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
@@ -159,6 +177,74 @@
                         </table>
                     </div>
                 </div>
+
+                {{-- VIEW CARD (MOBILE ONLY) --}}
+                <div class="grid grid-cols-1 gap-4 md:hidden">
+                    @forelse ($pendaftarans as $p)
+                        <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="max-w-[70%]">
+                                    <h3 class="text-sm font-bold text-gray-900 leading-tight">{{ $p->nama_siswa }}</h3>
+                                    <p class="text-[11px] text-gray-500 mt-1">NISN: {{ $p->nisn ?? '-' }}</p>
+                                </div>
+                                @php
+                                    $statusMobile = match (strtolower($p->status)) {
+                                        'diterima', 'disetujui' => 'bg-teal-50 text-teal-700 border-teal-200',
+                                        'ditolak' => 'bg-red-50 text-red-700 border-red-200',
+                                        default => 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                                    };
+                                @endphp
+                                <span class="px-3 py-1 rounded-full text-[10px] font-bold border {{ $statusMobile }}">
+                                    {{ ucfirst($p->status) }}
+                                </span>
+                            </div>
+                            
+                            <div class="space-y-2.5 mb-5">
+                                <div class="flex items-center gap-3 text-xs text-gray-600">
+                                    <div class="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center">
+                                        <i class="fas fa-school text-gray-400"></i>
+                                    </div>
+                                    <span class="truncate">{{ $p->asal_sekolah }}</span>
+                                </div>
+                                <div class="flex items-center gap-3 text-xs text-gray-600">
+                                    <div class="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center">
+                                        <i class="fas fa-calendar-alt text-gray-400"></i>
+                                    </div>
+                                    <span>{{ \Carbon\Carbon::parse($p->created_at)->translatedFormat('d M Y') }}</span>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2 pt-4 border-t border-gray-100">
+                                <a href="{{ route('admin.pendaftaran.show', $p->id_pendaftaran) }}" 
+                                   class="flex items-center justify-center py-2.5 rounded-xl bg-indigo-50 text-indigo-600 text-xs font-bold transition active:scale-95">
+                                    Detail
+                                </a>
+                                @if(strtolower($p->status) === 'pending')
+                                    <button onclick="handleAction(this, '{{ route('admin.pendaftaran.approve', $p->id_pendaftaran) }}', 'setuju')"
+                                            class="flex items-center justify-center py-2.5 rounded-xl bg-emerald-50 text-emerald-600 text-xs font-bold transition active:scale-95">
+                                        Setuju
+                                    </button>
+                                @else
+                                    <button disabled class="flex items-center justify-center py-2.5 rounded-xl bg-gray-50 text-gray-300 text-xs font-bold opacity-50">
+                                        Setuju
+                                    </button>
+                                @endif
+                                
+                                @if(strtolower($p->status) === 'pending')
+                                    <button onclick="handleAction(this, '{{ route('admin.pendaftaran.reject', $p->id_pendaftaran) }}', 'tolak')"
+                                            class="col-span-2 flex items-center justify-center py-2.5 rounded-xl bg-rose-50 text-rose-600 text-xs font-bold transition active:scale-95">
+                                        Tolak Pendaftaran
+                                    </button>
+                                @endif
+                            </div>
+                        </div>
+                    @empty
+                        <div class="bg-gray-50 p-10 text-center rounded-2xl border-2 border-dashed border-gray-200">
+                            <p class="text-gray-400 text-sm">Tidak ada data pendaftar ditemukan.</p>
+                        </div>
+                    @endforelse
+                </div>
+
             </div>
         </main>
     </div>
