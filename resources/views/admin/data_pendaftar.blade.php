@@ -36,8 +36,8 @@
 
                 <x-pageheadersatu title="Kelola Pendaftaran" description="Kelola data pendaftar di sini!" />
 
-                {{-- Toolbar --}}
-                <div class="mb-6 flex flex-row justify-between items-center gap-3">
+                {{-- Toolbar (Export di bawah tulisan Daftar Pendaftar) --}}
+                <div class="mb-6 flex flex-col items-start gap-3">
                     <h2 class="text-xl font-semibold text-black">Daftar Pendaftar</h2>
                     <a href="{{ route('admin.export.pendaftaran') }}"
                         class="inline-flex items-center gap-2 bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 font-medium py-2 px-3 md:px-4 rounded-lg shadow-sm transition text-sm">
@@ -52,15 +52,15 @@
                     <form id="filterForm" action="{{ route('admin.pendaftaran.index') }}" method="GET" 
                         class="flex flex-col md:flex-row md:items-center gap-3">
 
-                        {{-- Search - Full width di mobile, lebar maksimal di desktop --}}
-                        <div class="relative flex-1 md:max-w-xs lg:max-w-md">
+                        {{-- Search - Diperpanjang menggunakan lg:max-w-4xl --}}
+                        <div class="relative flex-1 md:max-w-xl lg:max-w-4xl">
                             <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
                             <input type="text" name="search" placeholder="Cari nama atau NISN..."
                                 value="{{ request('search') }}"
                                 class="w-full pl-10 pr-4 py-2.5 rounded-xl md:rounded-lg border border-gray-300 bg-white focus:ring-blue-500 focus:border-blue-500 text-sm shadow-sm">
                         </div>
 
-                        {{-- Grouping Dropdown & Sort: Grid 2 kolom di mobile, Flex Row di desktop --}}
+                        {{-- Grouping Dropdown & Sort --}}
                         <div class="grid grid-cols-2 md:flex md:flex-row gap-2 md:gap-3">
                             
                             {{-- Dropdown Status --}}
