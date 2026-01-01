@@ -57,10 +57,10 @@
             <h3 class="text-xl font-bold mb-6">Partner</h3>
             <div class="flex flex-wrap gap-4">
                 <div class="bg-white p-2 rounded-lg flex items-center justify-center">
-                    <img src="{{ asset('storage/logo-ti.png') }}" alt="Partner 1" class="h-12 w-auto">
+                    <img src="{{ asset('storage/ti.png') }}" alt="Partner 1" class="h-12 w-auto">
                 </div>
                 <div class="bg-white p-2 rounded-lg flex items-center justify-center">
-                    <img src="{{ asset('storage/logo-umy.png') }}" alt="Partner 2" class="h-12 w-auto">
+                    <img src="{{ asset('storage/umy.png') }}" alt="Partner 2" class="h-12 w-auto">
                 </div>
             </div>
         </div>
