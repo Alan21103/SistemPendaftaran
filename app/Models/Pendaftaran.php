@@ -17,7 +17,6 @@ class Pendaftaran extends Model
 
     /**
      * The attributes that are mass assignable.
-     * Mengizinkan pengisian massal untuk semua kolom non-foreign key dan non-dokumen yang akan diisi
      *
      * @var array<int, string>
      */
@@ -42,7 +41,7 @@ class Pendaftaran extends Model
         'pekerjaan_ayah',
         'pekerjaan_ibu',
 
-        // Atribut Dokumen (hanya nama file/path)
+        // Atribut Dokumen
         'kk',
         'akte',
         'foto',
@@ -51,16 +50,44 @@ class Pendaftaran extends Model
     ];
 
     /**
-     * Relasi many-to-one ke User (siswa yang mendaftar).
+     * Relasi ke User (Siswa)
      */
     public function user()
     {
         return $this->belongsTo(User::class, 'id_user', 'id_user');
     }
 
+    /**
+     * Relasi ke Admin yang memproses
+     */
     public function admin()
     {
-        // Asumsi Model Admin menggunakan id_admin sebagai primary key
         return $this->belongsTo(Admin::class, 'id_admin', 'id_admin');
     }
+
+    /**
+     * Relasi ke Tagihan
+     * Digunakan untuk menyambungkan Pendaftaran ke data keuangan
+     */
+   public function tagihan()
+{
+    // Jika di tabel tagihan kolomnya adalah id_pendaftaran
+    return $this->hasOne(Tagihan::class, 'id_pendaftaran', 'id_pendaftaran');
+}
+
+    /**
+     * Relasi ke Pembayaran (Melalui Tagihan)
+     * Ini memungkinkan Anda mengakses $pendaftaran->pembayaran langsung
+     */
+   public function pembayaran()
+{
+    return $this->hasOneThrough(
+        Pembayaran::class,
+        Tagihan::class,
+        'id_pendaftaran', // Foreign key di tabel tagihan
+        'tagihan_id',     // Foreign key di tabel pembayaran
+        'id_pendaftaran', // Local key di tabel pendaftaran
+        'id'              // Local key di tabel tagihan
+    );
+}
 }
