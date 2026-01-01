@@ -5,7 +5,10 @@
         {{-- Header Halaman --}}
         <div class="text-center mb-10">
             <h1 class="text-3xl lg:text-4xl font-extrabold text-black">Status Pendaftaran PPDB</h1>
-            <p class="text-lg text-gray-600 mt-2">SD Muhammadiyah 2 Ambarketawang - Tahun Pelajaran 2025/2026</p>
+            {{-- Logika Otomatis: Menampilkan Tahun Sekarang / Tahun Depan --}}
+            <p class="text-lg text-gray-600 mt-2">
+                SD Muhammadiyah 2 Ambarketawang - Tahun Pelajaran {{ date('Y') }}/{{ date('Y') + 1 }}
+            </p>
         </div>
 
         {{-- Logika Tampilan Data Pendaftaran --}}
@@ -40,7 +43,7 @@
                     <div class="p-6 border-b border-gray-50 flex flex-col md:flex-row justify-between items-center gap-4 bg-gray-50/50">
                         <h2 class="text-xl font-bold text-gray-800">Detail Pendaftaran</h2>
                         
-                        {{-- Badge dengan Icon (Tanpa tulisan "Status Anda:") --}}
+                        {{-- Badge dengan Icon --}}
                         <div class="flex items-center gap-2 px-5 py-2 font-bold text-sm rounded-full border-2 {{ $statusData['color'] }} shadow-sm">
                             {!! $statusData['icon'] !!}
                             <span>{{ $statusData['label'] }}</span>

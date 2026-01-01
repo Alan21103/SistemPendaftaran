@@ -108,6 +108,16 @@
 
             {{-- Pembayaran --}}
             @php $isActive = request()->routeIs('admin.pembayaran.*'); @endphp
+            <a href="{{ route('admin.pembayaran.index') }}"
+                class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group
+                @if ($isActive) 
+                    bg-indigo-50 text-indigo-700 font-bold shadow-sm ring-1 ring-indigo-100
+                @else 
+                    text-gray-500 font-medium hover:bg-gray-50 hover:text-gray-900 
+                @endif">
+
+                <img src="{{ asset('icons/pembayaran.svg') }}" alt="Dashboard Icon"
+                class="h-5 w-5 transition-colors text-gray-700 group-hover:text-gray-900">
             <a href="{{ route('admin.pembayaran.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group
                     @if ($isActive) 
                         bg-indigo-50 text-indigo-700 font-bold shadow-sm ring-1 ring-indigo-100

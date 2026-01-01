@@ -10,6 +10,7 @@ export default defineConfig({
                 'resources/js/logout.js',
                 'resources/js/pendaftaran-script.js', 
                 'resources/js/pendaftaran-action.js',
+                'resources/css/pembayaran-admin.css',
             ],
             refresh: true,
         }),

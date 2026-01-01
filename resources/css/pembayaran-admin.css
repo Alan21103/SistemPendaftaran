@@ -1,0 +1,102 @@
+/* Custom Month Picker Dropdown */
+.month-picker-container {
+    position: relative;
+    min-width: 280px;
+    cursor: pointer;
+}
+
+.month-picker-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.75rem;
+    background: white;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+    height: 46px;
+}
+
+.month-picker-trigger:hover { 
+    border-color: #3b82f6; 
+}
+
+.month-picker-dropdown {
+    position: absolute;
+    top: 110%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #d1d5db;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    z-index: 50;
+    display: none;
+    padding: 1rem;
+}
+
+.month-picker-container.active .month-picker-dropdown {
+    display: block;
+}
+
+.month-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+}
+
+.month-option {
+    padding: 0.6rem;
+    text-align: center;
+    font-size: 0.875rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+
+.month-option:hover {
+    background-color: #f3f4f6;
+}
+
+.month-option.selected {
+    background-color: #eff6ff;
+    color: #2563eb;
+    font-weight: 600;
+    border-color: #bfdbfe;
+}
+
+.month-picker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.month-picker-header span {
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.month-picker-nav {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.month-picker-nav button {
+    padding: 0.25rem 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: white;
+    font-size: 0.75rem;
+}
+
+.month-picker-nav button:hover {
+    border-color: #3b82f6;
+    color: #3b82f6;
+}
