@@ -102,10 +102,8 @@
                     text-gray-500 font-medium hover:bg-gray-50 hover:text-gray-900 
                 @endif">
 
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="{{ $isActive ? '2' : '1.5' }}" stroke="currentColor" 
-                        class="h-5 w-5 transition-colors {{ $isActive ? 'text-indigo-600' : 'text-gray-400 group-hover:text-gray-600' }}">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5h16.5M3.75 20.25h16.5M3.75 16.5h16.5M3.75 12h16.5M3.75 8.25h16.5m1.5 0v11.25c0 .754-.726 1.294-1.453 1.096a60.115 60.115 0 01-1.547-.447M21 8.25V4.5a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 4.5v15.75c0 .754.726 1.294 1.453 1.096a60.115 60.115 0 013.297-1.346" />
-                </svg>
+                <img src="{{ asset('icons/pembayaran.svg') }}" alt="Dashboard Icon"
+                class="h-5 w-5 transition-colors text-gray-700 group-hover:text-gray-900">
                 <span>Pembayaran</span>
             </a>
         @endif

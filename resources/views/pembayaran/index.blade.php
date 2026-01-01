@@ -8,6 +8,12 @@
         $tahunSelesai = $tahunMulai + 1;
         $tahunAjaran = $tahunMulai . '/' . $tahunSelesai;
 
+        // --- PERBAIKAN DI SINI: MENGURUTKAN TANGGAL TERLAMA KE TERBARU ---
+        if (isset($riwayat_cicilan)) {
+            $riwayat_cicilan = $riwayat_cicilan->sortBy('tanggal_bayar')->values();
+        }
+        // ---------------------------------------------------------------
+
         // 2. Logika Perhitungan & Warna Tagihan
         if (isset($tagihan)) {
             $total_seharusnya = $rincian_biaya->sum('jumlah_biaya');
@@ -36,8 +42,8 @@
     <div class="min-h-screen bg-gray-100 py-12 px-4">
         {{-- HEADER --}}
         <div class="text-center mb-8">
-            <h1 class="text-2xl font-bold text-gray-900">Pembayaran Biaya Sekolah</h1>
-            <p class="text-sm text-gray-600">SD Muhammadiyah 2 Ambarketawang - Tahun Pelajaran {{ $tahunAjaran }}</p>
+            <h1 class="text-3xl lg:text-4xl font-extrabold text-black">Pembayaran Biaya Sekolah</h1>
+            <p class="text-lg text-gray-600 mt-2">SD Muhammadiyah 2 Ambarketawang - Tahun Pelajaran {{ $tahunAjaran }}</p>
         </div>
 
         {{-- CARD PUTIH --}}
@@ -89,7 +95,6 @@
                                 <span>Total Tagihan</span>
                                 <span class="font-bold">Rp. {{ number_format($total_seharusnya, 0, ',', '.') }}</span>
                             </div>
-                            {{-- Warna dinamis: Merah/Kuning/Hijau --}}
                             <div class="flex justify-between {{ $warnaStatus }}">
                                 <span class="font-medium">Total Sudah Dibayar</span>
                                 <span class="font-bold">Rp. {{ number_format($sudah_dibayar_riwayat, 0, ',', '.') }}</span>
