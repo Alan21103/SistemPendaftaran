@@ -11,14 +11,14 @@
 
         @if(isset($pendaftaran) && $pendaftaran)
             @php
-                // Logika Status
-                $statusData = match ($pendaftaran->status ?? 'Pending') {
-                    'Diterima', 'diterima' => [
+                // 1. Logika Warna & Icon Status Pendaftaran (Diterima/Pending/Ditolak)
+                $statusData = match (strtolower($pendaftaran->status ?? 'pending')) {
+                    'diterima' => [
                         'color' => 'bg-green-100 text-green-700 border-green-200',
                         'icon' => '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
                         'label' => 'Diterima'
                     ],
-                    'Ditolak', 'ditolak' => [
+                    'ditolak' => [
                         'color' => 'bg-red-100 text-red-700 border-red-200',
                         'icon' => '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
                         'label' => 'Ditolak'
@@ -30,12 +30,11 @@
                     ],
                 };
 
-                // Cek Kwitansi dari Admin (Menggunakan id_pendaftaran dan bukti_transfer)
-                $kwitansiAdmin = \App\Models\Pembayaran::whereHas('tagihan', function($q) use ($pendaftaran) {
+                // 2. Logika Cek Pembayaran Lunas (Menggunakan kolom status_konfirmasi)
+                $pembayaranLunas = \App\Models\Pembayaran::whereHas('tagihan', function($q) use ($pendaftaran) {
                     $q->where('id_pendaftaran', $pendaftaran->id_pendaftaran);
                 })
-                ->whereNotNull('bukti_transfer')
-                ->where('bukti_transfer', '!=', '')
+                ->where('status_konfirmasi', 'Lunas') // Sesuaikan dengan kolom di model Anda
                 ->first();
             @endphp
 
@@ -52,7 +51,7 @@
                     </div>
 
                     <div class="p-8 lg:p-10 text-gray-800">
-                        {{-- Detail Informasi (Grid 3 Kolom Agar Sejajar Sempurna) --}}
+                        {{-- Grid Informasi Detail --}}
                         <div class="space-y-4">
                             @php
                                 $details = [
@@ -84,6 +83,7 @@
 
                         {{-- Tombol Aksi --}}
                         <div class="mt-10 pt-8 border-t border-gray-100 flex flex-wrap gap-4 justify-center md:justify-start">
+                            
                             @if(strtolower($pendaftaran->status) == 'diterima')
                                 
                                 {{-- Tombol Unduh Bukti Daftar --}}
@@ -93,9 +93,11 @@
                                     Unduh Bukti Daftar
                                 </a>
 
-                                @if($kwitansiAdmin)
-                                    {{-- Tombol Unduh Kwitansi (Icon dikembalikan ke bentuk File/Dokumen) --}}
-                                    <a href="{{ asset('storage/' . $kwitansiAdmin->bukti_transfer) }}" 
+                                {{-- Logika Tombol Pembayaran / Kwitansi --}}
+                                @if($pembayaranLunas)
+                                    {{-- Muncul jika status_konfirmasi == 'Lunas' --}}
+                                    {{-- Menggunakan foto_kwitansi jika tersedia, jika tidak pakai bukti_transfer --}}
+                                    <a href="{{ asset('storage/' . ($pembayaranLunas->foto_kwitansi ?? $pembayaranLunas->bukti_transfer)) }}" 
                                        download="Kwitansi_PPDB_{{ Str::slug($pendaftaran->nama_siswa) }}.jpg"
                                        class="inline-flex items-center px-8 py-3 bg-emerald-600 rounded-full font-bold text-xs text-white uppercase tracking-widest hover:bg-emerald-700 transition shadow-md active:scale-95">
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -104,9 +106,9 @@
                                         Unduh Kwitansi
                                     </a>
                                 @else
-                                    {{-- Tombol Lanjutkan Pembayaran --}}
+                                    {{-- Muncul jika belum lunas --}}
                                     <a href="{{ route('pembayaran.index', $pendaftaran->id_pendaftaran) }}"
-                                        class="inline-flex items-center px-8 py-3 bg-green-600 rounded-full font-bold text-xs text-white uppercase tracking-widest hover:bg-green-700 transition shadow-md active:scale-95">
+                                        class="inline-flex items-center px-8 py-3 bg-orange-500 rounded-full font-bold text-xs text-white uppercase tracking-widest hover:bg-orange-600 transition shadow-md active:scale-95">
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"></path></svg>
                                         Lanjutkan Pembayaran
                                     </a>
