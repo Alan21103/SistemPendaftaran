@@ -8,7 +8,8 @@
 
         {{-- Swiper CSS --}}
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-        
+        <link rel="icon" type="image/png" href="{{ asset('storage/favicon.png') }}">
+        <link rel="shortcut icon" type="image/png" href="{{ asset('storage/favicon.png') }}">
         {{-- AOS CSS --}}
         <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
         
@@ -177,7 +178,7 @@
         </section>
 
       {{-- 4. SECTION TENAGA PENGAJAR --}}
-<section id="tenaga-pengajar" class="py-20 bg-white"> {{-- Ganti bg-white ke gray-50 sedikit agar shadow putih lebih kontras --}}
+<section id="tenaga-pengajar" class="py-20 bg-gray-50">
     <div class="max-w-7xl mx-auto px-6 lg:px-8">
         <div class="text-center mb-16" data-aos="fade-up">
             <h2 class="text-3xl md:text-4xl font-extrabold text-black">Tenaga Pengajar</h2>
@@ -194,22 +195,31 @@
                             @php 
                                 $fotoUrl = $guru->media->first() ? asset('storage/' . $guru->media->first()->file_path) : asset('storage/default-avatar.png'); 
                             @endphp
-                            <div class="swiper-slide p-4"> {{-- Tambah padding p-4 agar shadow tidak terpotong saat hover --}}
-                                <div class="bg-white rounded-[2rem] p-6 flex items-center gap-8 
-                                            shadow-[0_15px_30px_-5px_rgba(0,0,0,0.15)] 
+                            <div class="swiper-slide p-4 h-auto"> 
+                                <div class="bg-white rounded-[2rem] p-5 flex flex-row items-center gap-4 h-full
+                                            shadow-[0_15px_30px_-5px_rgba(0,0,0,0.1)] 
                                             border border-gray-100 
                                             transition-all duration-300 ease-in-out 
-                                            cursor-pointer group">
+                                            hover:shadow-xl group">
                                     
-                                    <div class="w-28 h-28 md:w-32 md:h-32 rounded-[1.5rem] overflow-hidden flex-shrink-0 bg-gray-100 shadow-inner transition-transform duration-300">
-                                        <img src="{{ $fotoUrl }}" alt="{{ $guru->judul }}" class="w-full h-full object-cover">
+                                    {{-- Ukuran gambar sedikit diperkecil untuk memberi ruang pada teks --}}
+                                    <div class="w-16 h-16 md:w-24 md:h-24 rounded-[1.2rem] overflow-hidden flex-shrink-0 bg-gray-100 shadow-inner">
+                                        <img src="{{ $fotoUrl }}" alt="{{ $guru->judul }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                                     </div>
 
-                                    <div class="flex flex-col">
-                                        <h3 class="text-xl md:text-2xl font-bold text-gray-900 tracking-tight transition-colors">
+                                    {{-- Container Teks --}}
+                                    <div class="flex flex-col min-w-0 flex-1">
+                                        {{-- 
+                                            1. Ukuran font dikecilkan (text-sm ke text-base)
+                                            2. 'truncate' dihapus agar bisa wrap (pindah baris)
+                                            3. 'leading-tight' agar jarak antar baris rapat 
+                                        --}}
+                                        <h3 class="text-sm md:text-base font-bold text-gray-900 leading-tight break-words">
                                             {{ $guru->judul }}
                                         </h3>
-                                        <p class="text-gray-500 text-base md:text-lg mt-1 font-normal">
+                                        
+                                        {{-- Deskripsi/Jabatan juga dikecilkan --}}
+                                        <p class="text-gray-500 text-[11px] md:text-sm mt-1 font-normal line-clamp-2">
                                             {{ $guru->isi }}
                                         </p>
                                     </div>
@@ -220,8 +230,8 @@
                     </div>
                     <div class="swiper-pagination"></div>
                 </div>
-                <div class="swiper-button-prev !w-12 !h-12 !bg-white !text-blue-900 !rounded-full shadow-lg after:!text-lg !left-0 border border-gray-100 hover:bg-blue-900 hover:text-white transition-all"></div>
-                <div class="swiper-button-next !w-12 !h-12 !bg-white !text-blue-900 !rounded-full shadow-lg after:!text-lg !right-0 border border-gray-100 hover:bg-blue-900 hover:text-white transition-all"></div>
+                <div class="swiper-button-prev !w-10 !h-10 !bg-white !text-blue-900 !rounded-full shadow-md after:!text-sm !left-0 border border-gray-100 hover:bg-blue-900 hover:text-white transition-all"></div>
+                <div class="swiper-button-next !w-10 !h-10 !bg-white !text-blue-900 !rounded-full shadow-md after:!text-sm !right-0 border border-gray-100 hover:bg-blue-900 hover:text-white transition-all"></div>
             </div>
         @endif
     </div>

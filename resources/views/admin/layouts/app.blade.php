@@ -7,6 +7,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>Admin Dashboard | @yield('title', 'Sistem Pendaftaran')</title>
+    <link rel="icon" type="image/png" href="{{ asset('storage/favicon.png') }}">
+    <link rel="shortcut icon" type="image/png" href="{{ asset('storage/favicon.png') }}">
 
     @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/logout.js'])
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
