@@ -20,62 +20,62 @@ class AdminPendaftaranController extends Controller
      * Menampilkan daftar semua pendaftaran.
      */
     public function index(Request $request)
-{
-    $pendaftarQuery = Pendaftaran::with('user');
+    {
+        $pendaftarQuery = Pendaftaran::with('user');
 
-    // Search
-    if ($request->filled('search')) {
-        $search = $request->input('search');
-        $pendaftarQuery->where(function ($query) use ($search) {
-            $query->where('nama_siswa', 'like', "%$search%")
-                  ->orWhere('nisn', 'like', "%$search%")
-                  ->orWhere('asal_sekolah', 'like', "%$search%");
-        });
+        // Search
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $pendaftarQuery->where(function ($query) use ($search) {
+                $query->where('nama_siswa', 'like', "%$search%")
+                    ->orWhere('nisn', 'like', "%$search%")
+                    ->orWhere('asal_sekolah', 'like', "%$search%");
+            });
+        }
+
+        // Status filter
+        if ($request->filled('status') && $request->input('status') !== 'all') {
+            $pendaftarQuery->where('status', strtolower($request->input('status')));
+        }
+
+        // Asal sekolah filter
+        if ($request->filled('asal_sekolah') && $request->input('asal_sekolah') !== 'all') {
+            $pendaftarQuery->where('asal_sekolah', $request->input('asal_sekolah'));
+        }
+
+        // Sort / urutan toggle
+        $sortBy = $request->input('sort_by', 'latest');
+        switch ($sortBy) {
+            case 'nama_asc':
+                $pendaftarQuery->orderBy('nama_siswa', 'asc');
+                break;
+            case 'nama_desc':
+                $pendaftarQuery->orderBy('nama_siswa', 'desc');
+                break;
+            case 'tanggal_asc':
+                $pendaftarQuery->orderBy('created_at', 'asc');
+                break;
+            case 'tanggal_desc':
+                $pendaftarQuery->orderBy('created_at', 'desc');
+                break;
+            default:
+                $pendaftarQuery->latest('id_pendaftaran');
+        }
+
+        $pendaftarans = $pendaftarQuery->paginate(15)->withQueryString();
+
+        // Daftar unik asal sekolah
+        $list_sekolah = Pendaftaran::select('asal_sekolah')
+            ->distinct()
+            ->whereNotNull('asal_sekolah')
+            ->pluck('asal_sekolah')
+            ->sort()
+            ->toArray();
+
+        $list_status = ['pending', 'diterima', 'ditolak'];
+
+        return view('admin.data_pendaftar', compact('pendaftarans', 'list_sekolah', 'list_status', 'sortBy'));
     }
-
-    // Status filter
-    if ($request->filled('status') && $request->input('status') !== 'all') {
-        $pendaftarQuery->where('status', strtolower($request->input('status')));
-    }
-
-    // Asal sekolah filter
-    if ($request->filled('asal_sekolah') && $request->input('asal_sekolah') !== 'all') {
-        $pendaftarQuery->where('asal_sekolah', $request->input('asal_sekolah'));
-    }
-
-    // Sort / urutan toggle
-    $sortBy = $request->input('sort_by', 'latest');
-    switch ($sortBy) {
-        case 'nama_asc':
-            $pendaftarQuery->orderBy('nama_siswa', 'asc');
-            break;
-        case 'nama_desc':
-            $pendaftarQuery->orderBy('nama_siswa', 'desc');
-            break;
-        case 'tanggal_asc':
-            $pendaftarQuery->orderBy('created_at', 'asc');
-            break;
-        case 'tanggal_desc':
-            $pendaftarQuery->orderBy('created_at', 'desc');
-            break;
-        default:
-            $pendaftarQuery->latest('id_pendaftaran');
-    }
-
-    $pendaftarans = $pendaftarQuery->paginate(15)->withQueryString();
-
-    // Daftar unik asal sekolah
-    $list_sekolah = Pendaftaran::select('asal_sekolah')
-        ->distinct()
-        ->whereNotNull('asal_sekolah')
-        ->pluck('asal_sekolah')
-        ->sort()
-        ->toArray();
-
-    $list_status = ['pending','diterima','ditolak'];
-
-    return view('admin.data_pendaftar', compact('pendaftarans', 'list_sekolah', 'list_status', 'sortBy'));
-}
 
 
     /**
@@ -112,19 +112,21 @@ class AdminPendaftaranController extends Controller
     }
 
     /**
- * Approve pendaftaran
- */
-public function approve(Pendaftaran $pendaftaran)
+     * Approve pendaftaran
+     */
+    public function approve(Pendaftaran $pendaftaran)
     {
-        // 1. Set ID Admin yang melakukan perubahan
-        $pendaftaran->id_admin = Auth::id(); // Ambil ID pengguna (Admin) yang sedang login
-        
-        $pendaftaran->status = 'diterima'; 
+        // Set ID Admin yang melakukan perubahan
+        $pendaftaran->id_admin = Auth::id();
+
+        $pendaftaran->status = 'diterima';
         $pendaftaran->save();
 
+        // Tambahkan 'message' agar dibaca oleh SweetAlert
         return response()->json([
             'success' => true,
-            'status' => 'diterima'
+            'status' => 'diterima',
+            'message' => 'Status berhasil diubah menjadi: Diterima'
         ]);
     }
 
@@ -137,9 +139,9 @@ public function approve(Pendaftaran $pendaftaran)
             'alasan' => 'nullable|string'
         ]);
 
-        // 1. Set ID Admin yang melakukan perubahan
-        $pendaftaran->id_admin = Auth::id(); // Ambil ID pengguna (Admin) yang sedang login
-        
+        // Set ID Admin yang melakukan perubahan
+        $pendaftaran->id_admin = Auth::id();
+
         $pendaftaran->status = 'ditolak';
 
         if ($request->filled('alasan')) {
@@ -148,9 +150,11 @@ public function approve(Pendaftaran $pendaftaran)
 
         $pendaftaran->save();
 
+        // Tambahkan 'message' agar dibaca oleh SweetAlert
         return response()->json([
             'success' => true,
-            'status' => 'ditolak'
+            'status' => 'ditolak',
+            'message' => 'Status berhasil diubah menjadi: Ditolak'
         ]);
     }
 
@@ -165,13 +169,13 @@ public function approve(Pendaftaran $pendaftaran)
         ]);
 
         $pendaftaran = Pendaftaran::findOrFail($id);
-        
+
         // Cek jika status berubah (atau jika tidak ingin mencatat admin saat status tetap 'Pending')
         if ($pendaftaran->status !== $validated['status']) {
-             // 1. Set ID Admin yang melakukan perubahan
+            // 1. Set ID Admin yang melakukan perubahan
             $pendaftaran->id_admin = Auth::id(); // Ambil ID pengguna (Admin) yang sedang login
         }
-        
+
         $pendaftaran->status = $validated['status'];
         $pendaftaran->save();
 

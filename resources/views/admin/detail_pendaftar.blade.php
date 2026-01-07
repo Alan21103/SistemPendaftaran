@@ -205,25 +205,23 @@
                     </div>
                 </div>
 
-                {{-- TOMBOL AKSI FOOTER (Hanya jika Pending) --}}
+                {{-- TOMBOL AKSI FOOTER --}}
                 <div class="flex justify-end gap-4 mb-10">
                     @if(strtolower($pendaftaran->status) === 'pending')
-                        <button id="btnSetujui" data-id="{{ $pendaftaran->id_pendaftaran }}" type="button"
+                        <button type="button" 
+                            onclick="handleAction(this, '{{ route('admin.pendaftaran.approve', $pendaftaran->id_pendaftaran) }}', 'setuju')"
                             class="inline-flex items-center px-6 py-3 bg-green-500 hover:bg-green-600 text-white text-base font-medium rounded-lg transition shadow-md">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             Setujui Pendaftaran
                         </button>
 
-                        <button id="btnTolak" data-id="{{ $pendaftaran->id_pendaftaran }}" type="button"
+                        <button type="button"
+                            onclick="handleAction(this, '{{ route('admin.pendaftaran.reject', $pendaftaran->id_pendaftaran) }}', 'tolak')"
                             class="inline-flex items-center px-6 py-3 bg-red-600 hover:bg-red-700 text-white text-base font-medium rounded-lg transition shadow-md">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             Tolak Pendaftaran
                         </button>
@@ -256,83 +254,65 @@
 
     {{-- SCRIPT LENGKAP (MODAL & TOMBOL AKSI) --}}
     <script>
-        // --- 1. SCRIPT UNTUK MODAL ---
-        function openDocumentModal(url) {
-            const modal = document.getElementById('documentModal');
-            const iframe = document.getElementById('documentFrame');
-            iframe.src = url;
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
+    window.handleAction = function(btn, url, type) {
+        if (btn.disabled) return;
+        
+        // Ambil CSRF Token dari meta tag atau sediakan default
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
+        const isApprove = type === 'setuju';
+        
+        Swal.fire({
+            title: isApprove ? 'Setujui Pendaftaran?' : 'Tolak Pendaftaran?',
+            text: isApprove 
+                ? 'Siswa akan diterima sebagai calon peserta didik.' 
+                : 'Pendaftaran siswa akan dibatalkan/ditolak.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: isApprove ? 'Ya, Setujui' : 'Ya, Tolak',
+            cancelButtonText: 'Batal',
+            reverseButtons: true,
+            // Tambahkan ini agar tampilan tombol mengikuti style Tailwind Anda jika customClass tidak terbaca
+            confirmButtonColor: isApprove ? '#10b981' : '#dc2626',
+            cancelButtonColor: '#6b7280',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const originalContent = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
 
-        function closeDocumentModal() {
-            const modal = document.getElementById('documentModal');
-            const iframe = document.getElementById('documentFrame');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-            iframe.src = '';
-        }
-
-        // --- 2. SCRIPT UNTUK TOMBOL SETUJUI/TOLAK ---
-        document.addEventListener('DOMContentLoaded', () => {
-            const btnSetujui = document.getElementById('btnSetujui');
-            const btnTolak = document.getElementById('btnTolak');
-
-            // Event Listener untuk Setujui
-            if (btnSetujui) {
-                btnSetujui.addEventListener('click', function () {
-                    handleAction(this.dataset.id, 'approve');
-                });
-            }
-
-            // Event Listener untuk Tolak
-            if (btnTolak) {
-                btnTolak.addEventListener('click', function () {
-                    handleAction(this.dataset.id, 'reject');
-                });
-            }
-        });
-
-        // Fungsi Utama Handle Request
-        function handleAction(id, action) {
-            const label = action === 'approve' ? 'menyetujui' : 'menolak';
-            // Sesuaikan route URL ini jika perlu (pastikan /admin/pendaftaran ada di routes)
-            const url = action === 'approve'
-                ? `{{ url('admin/pendaftaran') }}/${id}/approve`
-                : `{{ url('admin/pendaftaran') }}/${id}/reject`;
-
-            if (!confirm(`Apakah Anda yakin ingin ${label} pendaftaran ini?`)) return;
-
-            // Tampilkan Loading pada tombol yang diklik
-            const btn = action === 'approve' ? document.getElementById('btnSetujui') : document.getElementById('btnTolak');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Memproses...';
-            btn.disabled = true;
-
-            fetch(url, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                }
-            })
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                })
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) {
-                        window.location.reload();
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil!',
+                            text: data.message || 'Status pendaftaran telah diperbarui.',
+                            timer: 1500,
+                            showConfirmButton: false
+                        }).then(() => window.location.reload());
                     } else {
-                        alert('Gagal: ' + (data.message || 'Terjadi kesalahan'));
-                        btn.innerHTML = originalText;
-                        btn.disabled = false;
+                        throw new Error(data.message || 'Gagal memperbarui status.');
                     }
                 })
                 .catch(err => {
-                    console.error(err);
-                    alert('Terjadi kesalahan sistem');
-                    btn.innerHTML = originalText;
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Kesalahan',
+                        text: err.message
+                    });
                     btn.disabled = false;
+                    btn.innerHTML = originalContent;
                 });
-        }
+            }
+        });
+    }
     </script>
 @endsection

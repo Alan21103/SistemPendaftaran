@@ -188,26 +188,21 @@
                                             $totalTerbayar = $d->pembayaran->where('status_konfirmasi', 'Diterima')->sum('nominal_bayar');
                                             $status = strtolower($d->status_pembayaran);
                                             
-                                            // Cari apakah sudah ada salah satu record pembayaran yang memiliki foto_kwitansi
-                                            $sudahAdaKwitansi = $d->pembayaran->whereNotNull('foto_kwitansi')->isNotEmpty();
+                                            // LOGIKA REVISI: Pastikan mengecek isi string foto_kwitansi tidak kosong
+                                            $dataKwitansi = $d->pembayaran->whereNotNull('foto_kwitansi')->where('foto_kwitansi', '!=', '')->first();
                                         @endphp
 
                                         <div class="flex items-center justify-center gap-2">
                                             @if($pembayaranPending)
-                                                {{-- Tombol Verifikasi --}}
                                                 <button @click="$dispatch('open-verifikasi', { 
                                                     id: '{{ $pembayaranPending->id }}',
                                                     nama: '{{ addslashes($d->pendaftaran->nama_siswa) }}',
-                                                    total_tagihan_full: '{{ number_format($d->total_tagihan, 0, ',', '.') }}',
                                                     nominal_input: '{{ number_format($pembayaranPending->nominal_bayar, 0, ',', '.') }}',
-                                                    sisa_akhir: '{{ number_format($d->sisa_tagihan, 0, ',', '.') }}',
-                                                    bukti: '{{ route('admin.pembayaran.view-bukti', $pembayaranPending->id) }}',
-                                                    tanggal: '{{ $pembayaranPending->created_at->format('d/m/Y H:i') }}'
+                                                    bukti: '{{ route('admin.pembayaran.view-bukti', $pembayaranPending->id) }}'
                                                 })" class="px-2 py-1 bg-amber-500 text-white rounded-md text-[10px] font-bold hover:bg-amber-600 transition animate-pulse whitespace-nowrap">
                                                     Verifikasi
                                                 </button>
                                             @else
-                                                {{-- Tombol Detail --}}
                                                 <button @click="openModal = true; selectedData = { 
                                                     nama: '{{ addslashes($d->pendaftaran->nama_siswa) }}', 
                                                     nisn: '{{ $d->pendaftaran->nisn }}', 
@@ -228,16 +223,30 @@
                                                     <i class="fas fa-eye"></i> Detail
                                                 </button>
 
-                                                {{-- Tombol Kwitansi: Muncul hanya jika LUNAS DAN foto_kwitansi MASIH KOSONG --}}
-                                                @if($status == 'lunas' && !$sudahAdaKwitansi)
-                                                    <button @click="$dispatch('open-modal-kwitansi', { 
-                                                        id: '{{ $d->pembayaran->where('status_konfirmasi', 'Diterima')->first()->id ?? $d->id }}', 
-                                                        nama: '{{ addslashes($d->pendaftaran->nama_siswa) }}',
-                                                        sudah_bayar: '{{ number_format($d->total_tagihan, 0, ',', '.') }}'
-                                                    })" 
-                                                    class="px-2 py-1 bg-[#FCA800] hover:bg-[#e09600] text-white rounded-md text-[10px] font-bold transition-all shadow-sm flex items-center gap-1 whitespace-nowrap">
-                                                        <i class="fas fa-file-invoice"></i> Kwitansi
-                                                    </button>
+                                                @if($status == 'lunas')
+                                                    @if($dataKwitansi)
+                                                        {{-- TOMBOL LIHAT HANYA MUNCUL JIKA STRING FOTO ADA --}}
+                                                        <button @click="$dispatch('view-kwitansi-pop', { 
+                                                            nama: '{{ addslashes($d->pendaftaran->nama_siswa) }}',
+                                                            img: '{{ asset('storage/' . $dataKwitansi->foto_kwitansi) }}'
+                                                        })"
+                                                           class="px-2 py-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-md text-[10px] font-bold transition-all shadow-sm flex items-center gap-1 whitespace-nowrap">
+                                                            <i class="fas fa-check-circle"></i> Lihat Kwitansi
+                                                        </button>
+                                                    @else
+                                                        {{-- TOMBOL UPLOAD MUNCUL JIKA FOTO NULL/KOSONG --}}
+                                                        @php 
+                                                            $pembayaranTerakhir = $d->pembayaran->where('status_konfirmasi', 'Diterima')->sortByDesc('created_at')->first(); 
+                                                        @endphp
+                                                        <button @click="$dispatch('open-modal-kwitansi', { 
+                                                            id: '{{ $pembayaranTerakhir->id ?? $d->id }}', 
+                                                            nama: '{{ addslashes($d->pendaftaran->nama_siswa) }}',
+                                                            sudah_bayar: '{{ number_format($d->total_tagihan, 0, ',', '.') }}'
+                                                        })" 
+                                                        class="px-2 py-1 bg-[#FCA800] hover:bg-[#e09600] text-white rounded-md text-[10px] font-bold transition-all shadow-sm flex items-center gap-1 whitespace-nowrap">
+                                                            <i class="fas fa-file-invoice"></i> Kwitansi
+                                                        </button>
+                                                    @endif
                                                 @endif
                                             @endif
                                         </div>
@@ -254,7 +263,30 @@
         </main>
 
         {{-- MODAL UPLOAD KWITANSI LUNAS --}}
-        <div x-data="{ openKwitansi: false, kwitansiData: {}, previewUrl: null }"
+        <div x-data="{ 
+            openKwitansi: false, 
+            kwitansiData: {}, 
+            previewUrl: null,
+            submitKwitansi() {
+                let formData = new FormData(this.$refs.formKwitansi);
+                Swal.fire({ title: 'Mohon Tunggu', text: 'Sedang memproses...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                fetch('/admin/pembayaran/update-kwitansi/' + this.kwitansiData.id, {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content, 'Accept': 'application/json' }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success || data.status === 'success') {
+                        Swal.fire({ title: 'Berhasil!', text: 'Kwitansi berhasil disimpan', icon: 'success', timer: 1500, showConfirmButton: false })
+                        .then(() => window.location.reload());
+                    } else {
+                        Swal.fire('Gagal!', data.message || 'Terjadi kesalahan.', 'error');
+                    }
+                }).catch(() => Swal.fire('Error!', 'Terjadi kesalahan sistem.', 'error'));
+            }
+        }"
             @open-modal-kwitansi.window="openKwitansi = true; kwitansiData = $event.detail; previewUrl = null"
             x-show="openKwitansi" x-cloak
             class="fixed inset-0 z-[1001] flex items-center justify-center p-4">
@@ -266,11 +298,10 @@
                 
                 <h2 class="text-2xl font-black text-center text-gray-900 mb-6">Upload Kwitansi Lunas</h2>
 
-                {{-- Info Box Ringkas --}}
                 <div class="bg-gray-50 rounded-2xl p-4 mb-6 border border-gray-100">
-                    <div class="flex justify-between mb-2">
-                        <span class="text-xs text-gray-500 font-bold uppercase">Nama Siswa</span>
-                        <span class="text-sm font-bold text-gray-900" x-text="kwitansiData.nama"></span>
+                    <div class="flex justify-between mb-2 text-xs font-bold uppercase">
+                        <span class="text-gray-500">Nama Siswa</span>
+                        <span class="text-gray-900" x-text="kwitansiData.nama"></span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-xs text-gray-500 font-bold uppercase">Total Pelunasan</span>
@@ -278,28 +309,20 @@
                     </div>
                 </div>
 
-                <form :action="'/admin/pembayaran/update-kwitansi/' + kwitansiData.id" method="POST" enctype="multipart/form-data">
+                <form x-ref="formKwitansi" @submit.prevent="submitKwitansi()" enctype="multipart/form-data">
                     @csrf
                     <div class="space-y-4">
                         <label class="block text-sm font-bold text-gray-700">Pilih File Kwitansi (JPG/PNG)</label>
-                        
                         <div class="relative group">
-                            <input type="file" name="foto_kwitansi" accept="image/*" required
-                                @change="previewUrl = URL.createObjectURL($event.target.files[0])"
+                            <input type="file" name="foto_kwitansi" accept="image/*" required @change="previewUrl = URL.createObjectURL($event.target.files[0])"
                                 class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
-                            
                             <div class="border-2 border-dashed border-gray-300 rounded-2xl p-8 flex flex-col items-center justify-center bg-gray-50 group-hover:bg-gray-100 transition-colors">
-                                {{-- Placeholder saat belum pilih file --}}
                                 <template x-if="!previewUrl">
                                     <div class="text-center">
-                                        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                                            <i class="fas fa-cloud-upload-alt text-xl"></i>
-                                        </div>
+                                        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3"><i class="fas fa-cloud-upload-alt text-xl"></i></div>
                                         <p class="text-xs text-gray-500 font-medium">Klik atau seret gambar ke sini</p>
                                     </div>
                                 </template>
-
-                                {{-- Preview saat file dipilih --}}
                                 <template x-if="previewUrl">
                                     <div class="text-center">
                                         <img :src="previewUrl" class="h-40 w-auto mx-auto rounded-lg shadow-md mb-2 object-cover border-2 border-white">
@@ -309,110 +332,106 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="flex flex-col gap-3 mt-8">
-                        <button type="submit" 
-                            class="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-100 transition active:scale-95 text-sm">
+                        <button type="submit" class="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-100 transition active:scale-95 text-sm">
                             Konfirmasi & Simpan Kwitansi
                         </button>
-                        <button type="button" @click="openKwitansi = false" 
-                            class="w-full py-3 text-gray-400 font-bold rounded-xl text-xs hover:text-gray-600 transition">
-                            Batal
-                        </button>
+                        <button type="button" @click="openKwitansi = false" class="w-full py-3 text-gray-400 font-bold rounded-xl text-xs hover:text-gray-600 transition">Batal</button>
                     </div>
                 </form>
             </div>
         </div>
-        {{-- ========================================= --}}
-        {{-- MODAL DETAIL PEMBAYARAN (VERSI TERBARU)   --}}
-        {{-- ========================================= --}}
-        <div x-show="openModal" x-cloak class="fixed inset-0 z-[100] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-                <div x-show="openModal" x-transition.opacity class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" @click="openModal = false"></div>
-                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
-                <div x-show="openModal" x-transition.scale.95 
-                    class="inline-block w-full max-w-xl p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-2xl rounded-3xl">
+        {{-- POPUP LIHAT KWITANSI (VIEW ONLY) --}}
+       <div x-data="{ openView: false, viewData: {} }"
+        @view-kwitansi-pop.window="openView = true; viewData = $event.detail"
+        x-show="openView" 
+        x-cloak
+        class="fixed inset-0 z-[1002] flex items-center justify-center p-4 sm:p-6">
+        
+        {{-- Overlay dengan efek Blur --}}
+        <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-md transition-opacity" 
+            x-show="openView" 
+            x-transition:enter="ease-out duration-300" 
+            x-transition:enter-start="opacity-0" 
+            x-transition:enter-end="opacity-100" 
+            x-transition:leave="ease-in duration-200" 
+            x-transition:leave-start="opacity-100" 
+            x-transition:leave-end="opacity-0"
+            @click="openView = false">
+        </div>
+
+        {{-- Konten Pop-up --}}
+        <div class="relative bg-white w-full max-w-2xl rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/20"
+            x-show="openView" 
+            x-transition:enter="transition ease-out duration-300" 
+            x-transition:enter-start="opacity-0 scale-95 translate-y-4" 
+            x-transition:enter-end="opacity-100 scale-100 translate-y-0" 
+            x-transition:leave="transition ease-in duration-200" 
+            x-transition:leave-start="opacity-100 scale-100 translate-y-0" 
+            x-transition:leave-end="opacity-0 scale-95 translate-y-4">
+            
+            {{-- Header --}}
+            <div class="px-8 pt-8 pb-4 flex justify-between items-center">
+                <div>
+                    <p class="text-teal-600 text-xs font-black uppercase tracking-widest mb-1">Pratinjau Dokumen</p>
+                    <h3 class="text-2xl font-black text-gray-900 leading-none" x-text="viewData.nama"></h3>
+                </div>
+                <button @click="openView = false" 
+                    class="bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-500 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            {{-- Area Gambar --}}
+            <div class="px-8 pb-4">
+                <div class="group relative bg-gray-50 rounded-[2rem] overflow-hidden border-2 border-dashed border-gray-200 flex items-center justify-center min-h-[300px] transition-all hover:border-teal-300">
+                    <img :src="viewData.img" 
+                        class="w-full h-auto object-contain max-h-[65vh] shadow-sm group-hover:scale-[1.02] transition-transform duration-500"
+                        alt="Kwitansi Pembayaran">
                     
-                    <h3 class="mb-6 text-xl font-black text-center text-gray-900" id="modal-title">Detail Pembayaran</h3>
+                    {{-- Overlay Hover Gambar --}}
+                    <div class="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                </div>
+            </div>
 
-                    <div class="grid grid-cols-3 gap-4 p-4 mb-6 bg-gray-50/50 border border-gray-100 rounded-2xl">
-                        <div>
-                            <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Nama Siswa</p>
-                            <p class="text-xs font-bold text-gray-800" x-text="selectedData.nama"></p>
-                        </div>
-                        <div>
-                            <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">NISN</p>
-                            <p class="text-xs font-bold text-gray-800" x-text="selectedData.nisn"></p>
-                        </div>
-                        <div>
-                            <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Total Cicilan</p>
-                            <p class="text-xs font-bold text-gray-800" x-text="selectedData.riwayat.length + 'x pembayaran'"></p>
-                        </div>
+            {{-- Footer/Aksi --}}
+            <div class="px-8 pb-8 pt-2 flex flex-col sm:flex-row gap-3">
+                <button @click="openView = false" 
+                    class="flex-1 px-6 py-4 border-2 border-[#003366] text-[#003366] font-black hover:bg-[#003366] hover:text-white rounded-2xl font-bold transition-all active:scale-95">
+                    Tutup Pratinjau
+                </button>
+            </div>
+        </div>
+    </div>
+
+        {{-- MODAL DETAIL PEMBAYARAN --}}
+        <div x-show="openModal" x-cloak class="fixed inset-0 z-[100] overflow-y-auto">
+            <div class="flex items-center justify-center min-h-screen px-4 text-center">
+                <div x-show="openModal" x-transition.opacity class="fixed inset-0 bg-black/40 backdrop-blur-sm" @click="openModal = false"></div>
+                <div x-show="openModal" x-transition.scale.95 class="inline-block w-full max-w-xl p-6 my-8 text-left align-middle bg-white shadow-2xl rounded-3xl relative z-10">
+                    <h3 class="mb-6 text-xl font-black text-center text-gray-900">Detail Pembayaran</h3>
+                    <div class="grid grid-cols-3 gap-4 p-4 mb-6 bg-gray-50/50 border border-gray-100 rounded-2xl text-xs">
+                        <div><p class="text-gray-400 font-bold uppercase">Nama</p><p class="font-bold text-gray-800" x-text="selectedData.nama"></p></div>
+                        <div><p class="text-gray-400 font-bold uppercase">NISN</p><p class="font-bold text-gray-800" x-text="selectedData.nisn"></p></div>
+                        <div><p class="text-gray-400 font-bold uppercase">Cicilan</p><p class="font-bold text-gray-800" x-text="selectedData.riwayat.length + 'x Pembayaran'"></p></div>
                     </div>
-
-                    <div class="mb-6 border-2 border-gray-800 rounded-xl overflow-hidden">
-                        <div class="bg-white p-4 space-y-2">
-                            <p class="text-xs font-black text-gray-900 mb-2">Ringkasan Tagihan</p>
-                            <div class="flex justify-between items-center text-xs">
-                                <span class="font-medium text-gray-600">Total Tagihan</span>
-                                <span class="font-bold text-gray-900" x-text="'Rp ' + selectedData.total"></span>
+                    <div class="mb-6 border-2 border-gray-800 rounded-xl p-4 space-y-2 text-xs">
+                        <div class="flex justify-between"><span>Total Tagihan</span><span class="font-bold" x-text="'Rp ' + selectedData.total"></span></div>
+                        <div class="flex justify-between"><span>Sudah Dibayar</span><span class="font-bold text-emerald-500" x-text="'Rp ' + selectedData.sudah_bayar"></span></div>
+                        <div class="pt-2 border-t flex justify-between font-black text-gray-900"><span>Sisa Tagihan</span><span :class="selectedData.sisa === '0' ? 'text-gray-400' : 'text-rose-500'" x-text="'Rp ' + selectedData.sisa"></span></div>
+                    </div>
+                    <div class="space-y-2 max-h-[200px] overflow-y-auto custom-scrollbar">
+                        <template x-for="(item, index) in selectedData.riwayat" :key="index">
+                            <div class="flex justify-between items-center p-3 border rounded-xl bg-white text-xs">
+                                <div><p class="font-bold" x-text="'Cicilan ' + (index + 1)"></p><p class="text-gray-400" x-text="item.tanggal"></p><a :href="item.bukti_url" target="_blank" class="text-blue-500 font-bold">Lihat Bukti</a></div>
+                                <div class="text-right"><p class="font-black text-gray-900" x-text="'Rp ' + item.nominal"></p><span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase border" :class="item.status === 'Diterima' ? 'bg-emerald-50 text-emerald-600' : 'bg-emerald-50 text-emerald-600'" x-text="item.status"></span></div>
                             </div>
-                            <div class="flex justify-between items-center text-xs">
-                                <span class="font-medium text-gray-600">Sudah Dibayar</span>
-                                {{-- Warna: Hitam jika 0, Hijau jika ada nominal --}}
-                                <span class="font-bold" 
-                                      :class="selectedData.sudah_bayar === '0' ? 'text-gray-900' : 'text-emerald-500'"
-                                      x-text="'Rp ' + selectedData.sudah_bayar"></span>
-                            </div>
-                            <div class="pt-2 border-t border-gray-100 flex justify-between items-center">
-                                <span class="text-xs font-black text-gray-900">Sisa Tagihan</span>
-                                {{-- Warna: Abu-abu jika 0, Merah jika ada nominal --}}
-                                <span class="text-xs font-black" 
-                                      :class="selectedData.sisa === '0' ? 'text-gray-400' : 'text-rose-500'"
-                                      x-text="'Rp ' + selectedData.sisa"></span>
-                            </div>
-                        </div>
+                        </template>
                     </div>
-
-                    {{-- Riwayat Cicilan --}}
-                    <div>
-                        <p class="text-xs font-black text-gray-900 mb-3">Riwayat Cicilan</p>
-                        <div class="space-y-2 max-h-[200px] overflow-y-auto custom-scrollbar pr-1">
-                            <template x-for="(item, index) in selectedData.riwayat" :key="index">
-                                <div class="flex justify-between items-center p-3 border border-gray-200 rounded-xl bg-white">
-                                    <div>
-                                        <p class="text-xs font-bold text-gray-800" x-text="'Cicilan ' + (index + 1)"></p>
-                                        <p class="text-[9px] text-gray-400" x-text="item.tanggal"></p>
-                                        <a :href="item.bukti_url" target="_blank" class="text-[9px] font-bold text-blue-500 hover:underline">Lihat Bukti Transfer</a>
-                                    </div>
-                                    <div class="text-right">
-                                        <p class="text-xs font-black text-gray-900 mb-1" x-text="'Rp ' + item.nominal"></p>
-                                        
-                                        <span class="px-2.5 py-1 text-[9px] font-black uppercase rounded-lg inline-flex items-center gap-1 shadow-sm border"
-                                            :class="{
-                                                'bg-emerald-500 text-white border-emerald-600': item.status === 'Diterima' || item.status === 'Dikonfirmasi',
-                                                'bg-amber-100 text-amber-600 border-amber-200': item.status === 'Menunggu Verifikasi',
-                                                'bg-rose-100 text-rose-600 border-rose-200': item.status === 'Ditolak'
-                                            }">
-                                            
-                                            <template x-if="item.status === 'Diterima' || item.status === 'Dikonfirmasi'">
-                                                <i class="fas fa-check-circle text-[10px]"></i>
-                                            </template>
-
-                                            <span x-text="item.status === 'Dikonfirmasi' || item.status === 'Diterima' ? 'Diterima' : item.status"></span>
-                                        </span>
-                                    </div>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-
-                    <div class="mt-8 flex justify-end">
-                        <button @click="openModal = false" class="px-6 py-2 border-2 border-[#003366] text-[#003366] text-xs font-black rounded-xl hover:bg-[#003366] hover:text-white transition-all">
-                            Tutup
-                        </button>
-                    </div>
+                    <div class="mt-8 flex justify-end"><button @click="openModal = false" class="px-6 py-2 border-2 border-[#003366] text-[#003366] text-xs font-black rounded-xl hover:bg-[#003366] hover:text-white transition-all">Tutup</button></div>
                 </div>
             </div>
         </div>
@@ -422,35 +441,24 @@
             @open-verifikasi.window="openVerif = true; verifData = $event.detail" 
             x-show="openVerif" x-cloak
             class="fixed inset-0 z-[1000] flex items-center justify-center p-4">
-            
             <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" @click="openVerif = false"></div>
-            
-            <div class="relative bg-white w-full max-w-2xl rounded-2xl shadow-2xl p-6 overflow-hidden">
+            <div class="relative bg-white w-full max-w-2xl rounded-2xl shadow-2xl p-6">
                 <h2 class="text-xl font-bold text-center text-gray-900 mb-6">Verifikasi Pembayaran</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <div class="aspect-square border rounded-xl overflow-hidden bg-gray-50 cursor-zoom-in" @click="showFullImage = true">
-                            <img :src="verifData.bukti" class="w-full h-full object-contain p-2">
-                        </div>
-                    </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+                    <div class="aspect-square border rounded-xl overflow-hidden bg-gray-50 cursor-zoom-in" @click="showFullImage = true"><img :src="verifData.bukti" class="w-full h-full object-contain"></div>
                     <div class="flex flex-col space-y-4">
-                        <div class="bg-gray-50 p-4 rounded-xl space-y-2 text-xs">
-                            <div class="flex justify-between text-gray-500"><span>Nama Siswa</span><span class="font-bold text-gray-800" x-text="verifData.nama"></span></div>
-                            <div class="flex justify-between text-gray-500"><span>Nominal Bayar</span><span class="font-bold text-emerald-500" x-text="'Rp ' + verifData.nominal_input"></span></div>
+                        <div class="bg-gray-50 p-4 rounded-xl space-y-2">
+                            <div class="flex justify-between text-gray-500"><span>Siswa</span><span class="font-bold text-gray-800" x-text="verifData.nama"></span></div>
+                            <div class="flex justify-between text-gray-500"><span>Nominal</span><span class="font-bold text-emerald-500" x-text="'Rp ' + verifData.nominal_input"></span></div>
                         </div>
                         <div class="flex flex-col gap-2 mt-auto">
-                            <button @click="handleReject(verifData.id)" class="w-full py-2 border-2 border-rose-500 text-rose-500 font-bold rounded-xl text-xs hover:bg-rose-50 transition">Tolak Bukti</button>
-                            <button @click="handleVerify(verifData.id)" class="w-full py-2 bg-[#003366] text-white font-bold rounded-xl text-xs hover:bg-black transition">Konfirmasi & Simpan</button>
-                            <button @click="openVerif = false" class="text-gray-400 text-[10px] font-bold mt-1">Tutup</button>
+                            <button @click="handleReject(verifData.id)" class="w-full py-2 border-2 border-rose-500 text-rose-500 font-bold rounded-xl">Tolak Bukti</button>
+                            <button @click="handleVerify(verifData.id)" class="w-full py-2 bg-[#003366] text-white font-bold rounded-xl">Konfirmasi & Simpan</button>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <div x-show="showFullImage" x-cloak class="fixed inset-0 z-[1100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md">
-                <button @click="showFullImage = false" class="absolute top-6 right-6 text-white text-3xl"><i class="fas fa-times"></i></button>
-                <img :src="verifData.bukti" class="max-w-full max-h-full rounded-lg object-contain">
-            </div>
+            <div x-show="showFullImage" @click="showFullImage = false" class="fixed inset-0 z-[1100] bg-black/90 flex items-center justify-center p-6"><img :src="verifData.bukti" class="max-w-full max-h-full object-contain"></div>
         </div>
     </div>
 
@@ -478,14 +486,26 @@
         function doSearch() { clearTimeout(timeout); timeout = setTimeout(() => document.getElementById('filterForm').submit(), 600); }
 
         function handleVerify(id) {
-            Swal.fire({ title: 'Simpan?', text: "Konfirmasi pembayaran ini?", icon: 'question', showCancelButton: true, confirmButtonColor: '#003366', confirmButtonText: 'Simpan' }).then(r => {
-                if (r.isConfirmed) fetch(`/admin/pembayaran/verify/${id}`, { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('[name=csrf-token]').content, 'Content-Type': 'application/json' } }).then(() => window.location.reload());
+            Swal.fire({ title: 'Simpan?', text: "Konfirmasi pembayaran ini?", icon: 'question', showCancelButton: true, confirmButtonColor: '#003366', confirmButtonText: 'Ya, Simpan' }).then(r => {
+                if (r.isConfirmed) {
+                    Swal.fire({ title: 'Memproses...', didOpen: () => Swal.showLoading() });
+                    fetch(`/admin/pembayaran/verify/${id}`, { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('[name=csrf-token]').content, 'Accept': 'application/json' } })
+                    .then(res => res.json())
+                    .then(data => Swal.fire('Berhasil', data.message, 'success').then(() => window.location.reload()))
+                    .catch(() => Swal.fire('Error', 'Gagal memproses data', 'error'));
+                }
             });
         }
 
         function handleReject(id) {
-            Swal.fire({ title: 'Tolak?', input: 'textarea', inputPlaceholder: 'Alasan...', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e11d48' }).then(r => {
-                if (r.isConfirmed) fetch(`/admin/pembayaran/reject/${id}`, { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('[name=csrf-token]').content, 'Content-Type': 'application/json' }, body: JSON.stringify({ alasan: r.value }) }).then(() => window.location.reload());
+            Swal.fire({ title: 'Tolak?', input: 'textarea', inputPlaceholder: 'Alasan...', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e11d48', confirmButtonText: 'Tolak' }).then(r => {
+                if (r.isConfirmed) {
+                    Swal.fire({ title: 'Memproses...', didOpen: () => Swal.showLoading() });
+                    fetch(`/admin/pembayaran/reject/${id}`, { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('[name=csrf-token]').content, 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify({ alasan: r.value }) })
+                    .then(res => res.json())
+                    .then(data => Swal.fire('Ditolak', data.message, 'success').then(() => window.location.reload()))
+                    .catch(() => Swal.fire('Error', 'Gagal memproses data', 'error'));
+                }
             });
         }
     </script>
