@@ -68,6 +68,32 @@
         .custom-select-container.active .arrow { transform: rotate(180deg); }
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+
+        /* Background pagination */
+        nav[role="navigation"] {
+            background-color: white;
+        }
+
+        /* Tombol pagination */
+        nav[role="navigation"] a,
+        nav[role="navigation"] span {
+            background-color: white !important;
+            color: #374151; /* gray-700 */
+            border-color: #e5e7eb; /* gray-200 */
+        }
+
+        /* Page aktif */
+        nav[role="navigation"] span[aria-current="page"] {
+            background-color: white !important;
+            color: #000 !important;
+            font-weight: 600;
+            border-color: #000;
+        }
+
+        /* Hover */
+        nav[role="navigation"] a:hover {
+            background-color: #f9fafb !important;
+        }
     </style>
 
     <div class="flex min-h-screen bg-white" x-data="{ 
@@ -257,6 +283,11 @@
                                 @endforelse
                             </tbody>
                         </table>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mt-4">
+                        <div class="px-6 py-4 border-t border-gray-100">
+                            {{ $datas->appends(request()->query())->links() }}
+                        </div>
                     </div>
                 </div>
             </div>

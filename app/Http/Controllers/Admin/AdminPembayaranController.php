@@ -80,7 +80,7 @@ class AdminPembayaranController extends Controller
         }
 
         // 6. Pagination (Mengikuti pola pendaftaran: 15 per halaman)
-        $datas = $pembayaranQuery->paginate(15)->withQueryString();
+        $datas = $pembayaranQuery->paginate(10)->withQueryString();
 
         // 7. Data pendukung untuk Filter Dropdown
         $list_sekolah = Pendaftaran::select('asal_sekolah')

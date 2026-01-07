@@ -21,6 +21,32 @@
             .h-5.w-\[1px\] { display: none; } /* Hilangkan garis pemisah date di mobile */
         
     }
+    /* Background pagination */
+    nav[role="navigation"] {
+        background-color: white;
+    }
+
+    /* Tombol pagination */
+    nav[role="navigation"] a,
+    nav[role="navigation"] span {
+        background-color: white !important;
+        color: #374151; /* gray-700 */
+        border-color: #e5e7eb; /* gray-200 */
+    }
+
+    /* Page aktif */
+    nav[role="navigation"] span[aria-current="page"] {
+        background-color: white !important;
+        color: #000 !important;
+        font-weight: 600;
+        border-color: #000;
+    }
+
+    /* Hover */
+    nav[role="navigation"] a:hover {
+        background-color: #f9fafb !important;
+    }
+
     </style>
     <div class="flex min-h-screen bg-white">
 
@@ -175,6 +201,10 @@
                                 @endforelse
                             </tbody>
                         </table>
+                        {{-- PAGINATION DESKTOP --}}
+                        <div class="px-6 py-4 border-t border-gray-100">
+                            {{ $pendaftarans->appends(request()->query())->links() }}
+                        </div>
                     </div>
                 </div>
 

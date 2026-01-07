@@ -62,7 +62,7 @@ class AdminPendaftaranController extends Controller
                 $pendaftarQuery->latest('id_pendaftaran');
         }
 
-        $pendaftarans = $pendaftarQuery->paginate(15)->withQueryString();
+        $pendaftarans = $pendaftarQuery->paginate(10)->withQueryString();
 
         // Daftar unik asal sekolah
         $list_sekolah = Pendaftaran::select('asal_sekolah')
