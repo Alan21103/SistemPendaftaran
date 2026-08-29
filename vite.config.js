@@ -15,4 +15,8 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    // TAMBAHKAN BLOK INI KHUSUS UNTUK LARAVEL 12
+    build: {
+        manifest: 'manifest.json', // Memaksa manifest keluar dari folder .vite
+    },
 });

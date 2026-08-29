@@ -1,0 +1,16 @@
+git clone https://github.com/Alan21103/SistemPendaftaran.git
+cd nama-project
+
+composer install
+
+npm install
+
+# Windows (Command Prompt)
+copy .env.example .env
+
+# Linux / macOS / Git Bash
+cp .env.example .env
+
+php artisan key:generate
+
+php artisan storage:link
